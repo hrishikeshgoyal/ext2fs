@@ -220,7 +220,7 @@ extern u_long ext2gennumber;
 void
 ext2fs_init(void)
 {
-
+	printf("inside ext2fs_init\n");
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
@@ -251,7 +251,8 @@ ext2fs_done(void)
 
 int
 ext2fs_mountroot(void)
-{
+{	
+	printf("ext2fs_mountroot\n");
 	extern struct vnode *rootvp;
 	struct m_ext2fs *fs;
 	struct mount *mp;
@@ -513,6 +514,7 @@ fail:
 int
 ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
+	printf ("ext2fs_reload\n");
 	struct vnode *vp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
@@ -614,6 +616,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 int
 ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 {
+	printf ("inside mountfs\n");
 	struct lwp *l = curlwp;
 	struct ufsmount *ump;
 	struct buf *bp;
@@ -1122,7 +1125,8 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
  */
 static int
 ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
-{
+{	
+	printf("ext2fs_sbfill\n");
 	uint32_t u32;
 	struct ext2fs *fs = &m_fs->e2fs;
 
@@ -1168,8 +1172,9 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 			printf("ext2fs: unsupported first inode position\n");
 			return EINVAL;
 		}
-		u32 = fs->e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP;
+		u32 = fs->e2fs_features_incompat & ~(EXT2F_INCOMPAT_SUPP);
 		if (u32) {
+		
 			snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS, u32);
 			printf("ext2fs: unsupported incompat features: %s\n", buf);
 			return EINVAL;

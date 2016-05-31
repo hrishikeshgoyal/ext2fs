@@ -92,6 +92,7 @@ static int	ext2fs_post_write_update(struct vnode *, struct uio *, int,
 int
 ext2fs_read(void *v)
 {
+	printf("ex2fs_read\n");
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
@@ -151,6 +152,7 @@ out:
 int
 ext2fs_bufrd(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 {
+	printf("ext2fs_bufrd\n");
 	struct inode *ip;
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;

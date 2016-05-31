@@ -261,6 +261,7 @@ ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
 int
 ext2fs_access(void *v)
 {
+	printf("inside ex2fs_access\n");
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;

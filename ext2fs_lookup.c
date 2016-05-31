@@ -131,6 +131,7 @@ ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 int
 ext2fs_readdir(void *v)
 {
+	printf("inside ext2fs_readdir\n");
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
@@ -261,6 +262,7 @@ ext2fs_readdir(void *v)
 int
 ext2fs_lookup(void *v)
 {
+	printf("inside ext2fs_lookup\n");
 	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -680,7 +682,8 @@ found:
 static int
 ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
 		int entryoffsetinblock)
-{
+{	
+	printf("inside ext2fs_dirbadentry\n");
 	struct ufsmount *ump = VFSTOUFS(dp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
 
@@ -726,6 +729,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		const struct ufs_lookup_results *ulr,
 		struct componentname *cnp)
 {
+	printf("inside ext2fs_direnter\n");
 	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
 	struct buf *bp;
@@ -865,10 +869,14 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
  * the space of the now empty record by adding the record size
  * to the size of the previous entry.
  */
+ 
+ 
+ 
 int
 ext2fs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		 struct componentname *cnp)
 {
+	printf("inside ext2fs_dirremove\n");
 	struct inode *dp;
 	struct ext2fs_direct *ep;
 	struct buf *bp;
@@ -911,6 +919,7 @@ int
 ext2fs_dirrewrite(struct inode *dp, const struct ufs_lookup_results *ulr,
     struct inode *ip, struct componentname *cnp)
 {
+	printf("inside ext2fs_dirrewrite\n");
 	struct buf *bp;
 	struct ext2fs_direct *ep;
 	struct vnode *vdp = ITOV(dp);
@@ -943,6 +952,7 @@ ext2fs_dirrewrite(struct inode *dp, const struct ufs_lookup_results *ulr,
 int
 ext2fs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
+	printf("inside ext2fs_dirempty\n");
 	off_t off;
 	struct ext2fs_dirtemplate dbuf;
 	struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;
