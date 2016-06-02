@@ -100,7 +100,7 @@ static int ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *,
 int
 ext2fs_bmap(void *v)
 {	
-	printf("Inside ext2fs_bmap\n");
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
 		daddr_t  a_bn;
@@ -108,6 +108,8 @@ ext2fs_bmap(void *v)
 		daddr_t *a_bnp;
 		int *a_runp;
 	} */ *ap = v;
+	
+	
 	
 	/*
 	 * Check for underlying vnode requests and ensure that logical
@@ -117,12 +119,16 @@ ext2fs_bmap(void *v)
 		*ap->a_vpp = VTOI(ap->a_vp)->i_devvp;
 	if (ap->a_bnp == NULL)
 		return (0);
-
-	if (VTOI(ap->a_vp)->i_flag & IN_E4EXTENTS)
+	
+	
+	printf("value of i_flag, e2di_flags  and IN_E4EXTENTS are : %x,  %x   and %x \n",VTOI(ap->a_vp)->i_flag ,  VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags, IN_E4EXTENTS);
+	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & IN_E4EXTENTS)
 		return (ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
 		    ap->a_runp, NULL));
-	else return (ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
+	else 
+	return (ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
 		ap->a_runp));
+	
 		
 }
 

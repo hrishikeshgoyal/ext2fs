@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.19 2013/01/22 09:39:15 dholland E
 void
 e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 {
-
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	/* preserve unused fields */
 	memcpy(new, old, sizeof(struct ext2fs));
 	new->e2fs_icount	=	bswap32(old->e2fs_icount);
@@ -83,6 +83,7 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 
 void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
 {
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	int i;
 
 	for (i = 0; i < (size / (int)sizeof(struct  ext2_gd)); i++) {
@@ -97,7 +98,7 @@ void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
 
 void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new)
 {
-
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	new->e2di_mode		=	bswap16(old->e2di_mode);
 	new->e2di_uid		=	bswap16(old->e2di_uid);
 	new->e2di_gid		=	bswap16(old->e2di_gid);
