@@ -1,5 +1,35 @@
-#ifndef _FS_EXT2FS_EXT2_EXTENTS_H_
-#define	_FS_EXT2FS_EXT2_EXTENTS_H_
+/*	$NetBSD: ext2fs_extents.h,v 1.1 2016/06/03 15:35:48 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2012, 2010 Zheng Liu <lz@freebsd.org>
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * $FreeBSD: head/sys/fs/ext2fs/ext2_extents.h 295523 2016-02-11 15:27:14Z pfg $
+ */     
+
+#ifndef _UFS_EXT2FS_EXT2FS_EXTENTS_H_
+#define	_UFS_EXT2FS_EXT2FS_EXTENTS_H_
 
 #include <sys/types.h>
 #include <ufs/ufs/inode.h>
@@ -13,8 +43,8 @@
  * Ext4 file system extent on disk.
  */
 struct ext4_extent {
-	uint32_t e_blk;	/* first logical block */
-	uint16_t e_len;	/* number of blocks */
+	uint32_t e_blk;		/* first logical block */
+	uint16_t e_len;		/* number of blocks */
 	uint16_t e_start_hi;	/* high 16 bits of physical block */
 	uint32_t e_start_lo;	/* low 32 bits of physical block */
 };
@@ -68,9 +98,10 @@ struct ext4_extent_path {
 
 struct inode;
 struct m_ext2fs;
+
 int	ext4_ext_in_cache(struct inode *, daddr_t, struct ext4_extent *);
 void	ext4_ext_put_cache(struct inode *, struct ext4_extent *, int);
 struct ext4_extent_path *ext4_ext_find_extent(struct m_ext2fs *fs,
     struct inode *, daddr_t, struct ext4_extent_path *);
 
-#endif /* !_FS_EXT2FS_EXT2_EXTENTS_H_ */
+#endif /* !_UFS_EXT2FS_EXT2FS_EXTENTS_H_ */

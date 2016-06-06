@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.27 2016/06/03 15:35:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.27 2016/06/03 15:35:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.26 2013/01/22 09:39:15 dholland Ex
 
 
 static int ext4_bmapext(struct vnode *, int32_t, int64_t *, int *, int *);
-
-static int ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *,
-				struct indir *, int *, int *);
+static int ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
+    int *, int *);
 
 #define	is_sequential(ump, a, b)	((b) == (a) + ump->um_seqinc)
 
@@ -99,8 +98,7 @@ static int ext2fs_bmaparray(struct vnode *, daddr_t, daddr_t *,
  */
 int
 ext2fs_bmap(void *v)
-{	
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+{
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
 		daddr_t  a_bn;
@@ -108,9 +106,6 @@ ext2fs_bmap(void *v)
 		daddr_t *a_bnp;
 		int *a_runp;
 	} */ *ap = v;
-	
-	
-	
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.
@@ -121,37 +116,35 @@ ext2fs_bmap(void *v)
 		return (0);
 	
 	
-	printf("value of i_flag, e2di_flags  and IN_E4EXTENTS are : %x,  %x   and %x \n",VTOI(ap->a_vp)->i_flag ,  VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags, IN_E4EXTENTS);
 	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & IN_E4EXTENTS)
-		return (ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
-		    ap->a_runp, NULL));
-	else 
-	return (ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
-		ap->a_runp));
+		return ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
+		    ap->a_runp, NULL);
+	else
+		return ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL,
+		    NULL, ap->a_runp);
 	
 		
 }
 
-
 /*
- * This function converts the logical block number of a file to
- * its physical block number on the disk within ext4 extents.
+ * Convert the logical block number of a file to its physical block number
+ * on the disk within ext4 extents.
  */
 static int
 ext4_bmapext(struct vnode *vp, int32_t bn, int64_t *bnp, int *runp, int *runb)
 {	
-	printf ("inside ext4_bmapext\n");
 	struct inode *ip;
 	struct m_ext2fs	 *fs;
 	struct ext4_extent *ep;
 	struct ext4_extent_path path = { .ep_bp = NULL };
 	daddr_t lbn;
-	int ret = 0;
+	int error = 0;
 
 	ip = VTOI(vp);
 	fs = ip->i_e2fs;
 	lbn = bn;
 
+	/* XXX: Should not initialize on error? */
 	if (runp != NULL)
 		*runp = 0;
 
@@ -167,29 +160,29 @@ ext4_bmapext(struct vnode *vp, int32_t bn, int64_t *bnp, int *runp, int *runb)
 		if (runb != NULL)
 			*runb = lbn - path.ep_sparse_ext.e_blk;
 	} else {
-		ep = path.ep_ext;
-		if (ep == NULL)
-			ret = EIO;
-		else {
-			*bnp = fsbtodb(fs, lbn - ep->e_blk +
-			    (ep->e_start_lo | (daddr_t)ep->e_start_hi << 32));
-
-			if (*bnp == 0)
-				*bnp = -1;
-
-			if (runp != NULL)
-				*runp = ep->e_len - (lbn - ep->e_blk) - 1;
-			if (runb != NULL)
-				*runb = lbn - ep->e_blk;
+		if (path.ep_ext == NULL) {
+			error = EIO;
+			goto out;
 		}
+		ep = path.ep_ext;
+		*bnp = fsbtodb(fs, lbn - ep->e_blk
+		    + (ep->e_start_lo | (daddr_t)ep->e_start_hi << 32));
+
+		if (*bnp == 0)
+			*bnp = -1;
+
+		if (runp != NULL)
+			*runp = ep->e_len - (lbn - ep->e_blk) - 1;
+		if (runb != NULL)
+			*runb = lbn - ep->e_blk;
 	}
 
+out:
 	if (path.ep_bp != NULL) {
-		brelse(path.ep_bp,0);
-		path.ep_bp = NULL;
+		brelse(path.ep_bp, 0);
 	}
 
-	return (ret);
+	return error;
 }
 
 
@@ -212,8 +205,6 @@ int
 ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		int *nump, int *runp)
 {
-
-	printf("Inside ext2fs_bmaparray\n");
 	struct inode *ip;
 	struct buf *bp, *cbp;
 	struct ufsmount *ump;

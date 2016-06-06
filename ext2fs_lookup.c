@@ -224,6 +224,7 @@ ext2fs_readdir(void *v)
 		} else
 			*ap->a_ncookies = nc - ncookies;
 	}
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return (error);
 }
 
@@ -665,7 +666,9 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
+	 printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return 0;
 }
 

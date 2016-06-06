@@ -1,3 +1,36 @@
+/*	$NetBSD: ext2fs_extents.c,v 1.1 2016/06/03 15:35:48 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $FreeBSD: head/sys/fs/ext2fs/ext2_extents.c 295523 2016-02-11 15:27:14Z pfg $
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_extents.c,v 1.1 2016/06/03 15:35:48 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -26,7 +59,6 @@ static bool
 ext4_ext_binsearch_index(struct inode *ip, struct ext4_extent_path *path,
 		daddr_t lbn, daddr_t *first_lbn, daddr_t *last_lbn)
 {
-	printf("ext4_ext_binsearch_index\n");
 	struct ext4_extent_header *ehp = path->ep_header;
 	struct ext4_extent_index *first, *last, *l, *r, *m;
 
@@ -61,7 +93,6 @@ static void
 ext4_ext_binsearch(struct inode *ip, struct ext4_extent_path *path, daddr_t lbn,
 		daddr_t first_lbn, daddr_t last_lbn)
 {
-	printf("ext4_ext_binsearch\n");
 	struct ext4_extent_header *ehp = path->ep_header;
 	struct ext4_extent *first, *l, *r, *m;
 
@@ -109,7 +140,6 @@ ext4_ext_binsearch(struct inode *ip, struct ext4_extent_path *path, daddr_t lbn,
 int
 ext4_ext_in_cache(struct inode *ip, daddr_t lbn, struct ext4_extent *ep)
 {
-	printf("ext4_ext_in_cache\n");
 	struct ext4_extent_cache *ecp;
 	int ret = EXT4_EXT_CACHE_NO;
 
@@ -135,7 +165,6 @@ ext4_ext_in_cache(struct inode *ip, daddr_t lbn, struct ext4_extent *ep)
 void
 ext4_ext_put_cache(struct inode *ip, struct ext4_extent *ep, int type)
 {
-	printf("ext4_ext_put_cache\n");
 	struct ext4_extent_cache *ecp;
 
 	ecp = &ip->inode_ext.e2fs.i_ext_cache;
@@ -152,13 +181,12 @@ struct ext4_extent_path *
 ext4_ext_find_extent(struct m_ext2fs *fs, struct inode *ip,
 		     daddr_t lbn, struct ext4_extent_path *path)
 {
-	printf("inside ext4_ext_find_extent\n");
 	struct ext4_extent_header *ehp;
 	uint16_t i;
 	int error, size;
 	daddr_t nblk;
 
-	ehp = (struct ext4_extent_header *)(char *)ip->i_din.e2fs_din->e2di_blocks;
+	ehp = (struct ext4_extent_header *)ip->i_din.e2fs_din->e2di_blocks;
 
 	if (ehp->eh_magic != EXT4_EXT_MAGIC)
 		return (NULL);
@@ -180,13 +208,13 @@ ext4_ext_find_extent(struct m_ext2fs *fs, struct inode *ip,
 		    path->ep_index->ei_leaf_lo;
 		size = blksize(fs, ip, nblk);
 		if (path->ep_bp != NULL) {
-			brelse(path->ep_bp,0);
+			brelse(path->ep_bp, 0);
 			path->ep_bp = NULL;
 		}
 		error = bread(ip->i_devvp, fsbtodb(fs, nblk), size, 0,
 			    &path->ep_bp);
 		if (error) {
-			brelse(path->ep_bp,0);
+			brelse(path->ep_bp, 0);
 			path->ep_bp = NULL;
 			return (NULL);
 		}

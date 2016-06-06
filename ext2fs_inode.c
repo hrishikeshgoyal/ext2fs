@@ -229,6 +229,7 @@ out:
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
 	VOP_UNLOCK(vp);
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return (error);
 }
 

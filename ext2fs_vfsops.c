@@ -1014,6 +1014,7 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 	}
 	uvm_vnp_setsize(vp, ext2fs_size(ip));
 	*new_key = &ip->i_number;
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return 0;
 }
 

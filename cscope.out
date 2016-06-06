@@ -1,4 +1,4 @@
-cscope 15 $HOME/netbsd/src/sys/ufs/ext2fs               0000199750
+cscope 15 $HOME/netbsd/src/sys/ufs/ext2fs               0000199901
 	@ext2fs.h
 
 62 
@@ -5901,7 +5901,9 @@ NULL
 
 124 
 	`´štf
-("v®uoài_æag‡nd IN_E4EXTENTS‡» : %d‡nd %d \n",
+("value of i_flag,ƒ2di_flags‡nd IN_E4EXTENTS‡re : %x, %x‡nd %x \n",
+
+125 
 	`VTOI
 (
 ­
@@ -5909,11 +5911,33 @@ NULL
 a_vp
 )->
 i_æag
- , 
+ , VTOI×p->a_vp)->
+i_dš
+.
+e2fs_dš
+->
+e2di_æags
+, 
 IN_E4EXTENTS
 );
 
-126  (
+126 ià(
+	`VTOI
+(
+­
+->
+a_vp
+)->
+i_dš
+.
+e2fs_dš
+->
+e2di_æags
+ & 
+IN_E4EXTENTS
+)
+
+127  (
 	`ext4_bm­ext
 (
 ­
@@ -5925,7 +5949,7 @@ a_bn
 a_bÅ
 ,
 
-127 
+128 
 ­
 ->
 a_ruÅ
@@ -5933,7 +5957,7 @@ a_ruÅ
 NULL
 ));
 
-129  (
+130  (
 	`ext2fs_bm­¬¿y
 (
 ­
@@ -5947,17 +5971,17 @@ a_bÅ
 NULL
 , NULL,
 
-130 
+131 
 ­
 ->
 a_ruÅ
 ));
 
-133 
+134 
 	}
 }
 
-141 
+142 
 	$ext4_bm­ext
 (
 vnode
@@ -5977,29 +6001,29 @@ ruÅ
 runb
 )
 
-143 
+144 
 	`´štf
  ("insideƒxt4_bmapext\n");
 
-144 
+145 
 šode
  *
 
 ;
 
-145 
+146 
 m_ext2fs
  *
 fs
 ;
 
-146 
+147 
 ext4_ex‹Á
  *
 •
 ;
 
-147 
+148 
 ext4_ex‹Á_·th
  
 ·th
@@ -6009,17 +6033,17 @@ ext4_ex‹Á_·th
 NULL
  };
 
-148 
+149 
 daddr_t
  
 lbn
 ;
 
-149 
+150 
 »t
  = 0;
 
-151 
+152 
 
  = 
 	`VTOI
@@ -6027,7 +6051,7 @@ lbn
 vp
 );
 
-152 
+153 
 fs
  = 
 
@@ -6035,33 +6059,33 @@ fs
 i_e2fs
 ;
 
-153 
+154 
 lbn
  = 
 bn
 ;
 
-155 ià(
+156 ià(
 ruÅ
  !ð
 NULL
 )
 
-156 *
+157 *
 ruÅ
  = 0;
 
-158 ià(
+159 ià(
 runb
  !ð
 NULL
 )
 
-159 *
+160 *
 runb
  = 0;
 
-161 
+162 
 	`ext4_ext_fšd_ex‹Á
 (
 fs
@@ -6073,23 +6097,23 @@ lbn
 ·th
 );
 
-162 ià(
+163 ià(
 ·th
 .
 •_is_¥¬£
 ) {
 
-163 *
+164 *
 bÅ
  = -1;
 
-164 ià(
+165 ià(
 ruÅ
  !ð
 NULL
 )
 
-165 *
+166 *
 ruÅ
  = 
 ·th
@@ -6099,7 +6123,7 @@ ruÅ
 e_Ën
  -
 
-166 (
+167 (
 lbn
  - 
 ·th
@@ -6109,13 +6133,13 @@ lbn
 e_blk
 ) - 1;
 
-167 ià(
+168 ià(
 runb
  !ð
 NULL
 )
 
-168 *
+169 *
 runb
  = 
 lbn
@@ -6127,7 +6151,7 @@ lbn
 e_blk
 ;
 
-170 
+171 
 •
  = 
 ·th
@@ -6135,19 +6159,19 @@ e_blk
 •_ext
 ;
 
-171 ià(
+172 ià(
 •
  =ð
 NULL
 )
 
-172 
+173 
 »t
  = 
 EIO
 ;
 
-174 *
+175 *
 bÅ
  = 
 	`fsbtodb
@@ -6161,7 +6185,7 @@ lbn
 e_blk
  +
 
-175 (
+176 (
 •
 ->
 e_¡¬t_lo
@@ -6171,21 +6195,21 @@ daddr_t
 e_¡¬t_hi
  << 32));
 
-177 ià(*
+178 ià(*
 bÅ
  == 0)
 
-178 *
+179 *
 bÅ
  = -1;
 
-180 ià(
+181 ià(
 ruÅ
  !ð
 NULL
 )
 
-181 *
+182 *
 ruÅ
  = 
 •
@@ -6197,13 +6221,13 @@ lbn
 e_blk
 ) - 1;
 
-182 ià(
+183 ià(
 runb
  !ð
 NULL
 )
 
-183 *
+184 *
 runb
  = 
 lbn
@@ -6213,7 +6237,7 @@ lbn
 e_blk
 ;
 
-187 ià(
+188 ià(
 ·th
 .
 •_bp
@@ -6221,7 +6245,7 @@ e_blk
 NULL
 ) {
 
-188 
+189 
 	`b»l£
 (
 ·th
@@ -6229,7 +6253,7 @@ NULL
 •_bp
 ,0);
 
-189 
+190 
 ·th
 .
 •_bp
@@ -6237,15 +6261,15 @@ NULL
 NULL
 ;
 
-192  (
+193  (
 »t
 );
 
-193 
+194 
 	}
 }
 
-212 
+213 
 	$ext2fs_bm­¬¿y
 (
 vnode
@@ -6263,23 +6287,23 @@ bÅ
 ­
 ,
 
-213 *
+214 *
 nump
 , *
 ruÅ
 )
 
-216 
+217 
 	`´štf
 ("Insideƒxt2fs_bmaparray\n");
 
-217 
+218 
 šode
  *
 
 ;
 
-218 
+219 
 buf
  *
 bp
@@ -6287,19 +6311,19 @@ bp
 cbp
 ;
 
-219 
+220 
 ufsmouÁ
  *
 ump
 ;
 
-220 
+221 
 mouÁ
  *
 mp
 ;
 
-221 
+222 
 šdœ
  
 a
@@ -6309,19 +6333,19 @@ EXT2FS_NIADDR
 x­
 ;
 
-222 
+223 
 daddr_t
  
 daddr
 ;
 
-223 
+224 
 daddr_t
  
 m‘®bn
 ;
 
-224 
+225 
 ”rÜ
 , 
 maxrun
@@ -6329,7 +6353,7 @@ maxrun
 num
 ;
 
-226 
+227 
 
  = 
 	`VTOI
@@ -6337,7 +6361,7 @@ num
 vp
 );
 
-227 
+228 
 mp
  = 
 vp
@@ -6345,7 +6369,7 @@ vp
 v_mouÁ
 ;
 
-228 
+229 
 ump
  = 
 
@@ -6353,11 +6377,11 @@ ump
 i_ump
 ;
 
-229 #ifdeà
+230 #ifdeà
 DIAGNOSTIC
 
 
-230 ià((
+231 ià((
 ­
  !ð
 NULL
@@ -6365,19 +6389,19 @@ NULL
 nump
  == NULL) || (ap == NULL &&‚ump != NULL))
 
-231 
+232 
 	`·nic
 ("ext2fs_bmaparray: invalid‡rguments");
 
-234 ià(
+235 ià(
 ruÅ
 ) {
 
-241 *
+242 *
 ruÅ
  = 0;
 
-242 
+243 
 maxrun
  = 
 MAXBSIZE
@@ -6389,13 +6413,13 @@ mÁ_¡©
 f_iosize
  - 1;
 
-245 ià(
+246 ià(
 bn
  >ð0 && bÀ< 
 EXT2FS_NDADDR
 ) {
 
-247 *
+248 *
 bÅ
  = 
 	`blk±¹odb
@@ -6411,19 +6435,19 @@ i_e2fs_blocks
 bn
 ]));
 
-248 ià(*
+249 ià(*
 bÅ
  == 0)
 
-249 *
+250 *
 bÅ
  = -1;
 
-250 ià(
+251 ià(
 ruÅ
 )
 
-252 ++
+253 ++
 bn
 ; bÀ< 
 EXT2FS_NDADDR
@@ -6433,7 +6457,7 @@ ruÅ
 maxrun
  &&
 
-253 
+254 
 	`is_£qu’tŸl
 (
 ump
@@ -6449,7 +6473,7 @@ i_e2fs_blocks
 bn
  - 1]),
 
-254 (
+255 (
 daddr_t
 )
 	`fs2h32
@@ -6461,13 +6485,13 @@ i_e2fs_blocks
 bn
 ]));
 
-255 ++
+256 ++
 bn
 , ++*
 ruÅ
 );
 
-259 
+260 
 x­
  = 
 ­
@@ -6477,17 +6501,17 @@ NULL
 a
  :‡p;
 
-260 ià(!
+261 ià(!
 nump
 )
 
-261 
+262 
 nump
  = &
 num
 ;
 
-262 ià((
+263 ià((
 ”rÜ
  = 
 	`ufs_g‘lbns
@@ -6501,17 +6525,17 @@ x­
 nump
 )) != 0)
 
-263  (
+264  (
 ”rÜ
 );
 
-265 
+266 
 num
  = *
 nump
 ;
 
-269 
+270 
 daddr
  = 
 	`fs2h32
@@ -6527,27 +6551,27 @@ x­
 š_off
 ]);
 
-271 #ifdeà
+272 #ifdeà
 DIAGNOSTIC
 
 
-272 ià(
+273 ià(
 num
  > 
 EXT2FS_NIADDR
  + 1 ||‚um < 1) {
 
-273 
+274 
 	`´štf
 ("ext2fs_bm­¬¿y:‚um=%d\n", 
 num
 );
 
-274 
+275 
 	`·nic
 ("ext2fs_bmaparray:‚um");
 
-277 
+278 
 bp
  = 
 NULL
@@ -6557,7 +6581,7 @@ x­
 num
 ; ++xap) {
 
-284 
+285 
 m‘®bn
  = 
 x­
@@ -6565,23 +6589,23 @@ x­
 š_lbn
 ;
 
-285 ià(
+286 ià(
 m‘®bn
  =ð
 bn
 )
 
-287 ià(
+288 ià(
 daddr
  == 0) {
 
-288 
+289 
 	`mu‹x_’‹r
 (&
 bufÿche_lock
 );
 
-289 
+290 
 cbp
  = 
 	`šcÜe
@@ -6591,35 +6615,35 @@ vp
 m‘®bn
 );
 
-290 
+291 
 	`mu‹x_ex™
 (&
 bufÿche_lock
 );
 
-291 ià(
+292 ià(
 cbp
  =ð
 NULL
 )
 
-298 ià(
+299 ià(
 bp
 )
 
-299 
+300 
 	`b»l£
 (
 bp
 , 0);
 
-301 
+302 
 x­
 ->
 š_exi¡s
  = 1;
 
-302 
+303 
 bp
  = 
 	`g‘blk
@@ -6635,17 +6659,17 @@ mÁ_¡©
 f_iosize
 , 0, 0);
 
-303 ià(
+304 ià(
 bp
  =ð
 NULL
 ) {
 
-311  (
+312  (
 ENOMEM
 );
 
-313 ià(
+314 ià(
 bp
 ->
 b_oæags
@@ -6655,7 +6679,7 @@ BO_DONE
 BO_DELWRI
 )) {
 
-314 
+315 
 	`Œaû
 (
 TR_BREADHIT
@@ -6669,19 +6693,19 @@ size
 m‘®bn
 );
 
-316 #ifdeà
+317 #ifdeà
 DIAGNOSTIC
 
 
-317 ià(!
+318 ià(!
 daddr
 )
 
-318 
+319 
 	`·nic
 ("ext2fs_bmaparry: indirect block‚ot in cache");
 
-321 
+322 
 	`Œaû
 (
 TR_BREADMISS
@@ -6695,7 +6719,7 @@ size
 m‘®bn
 );
 
-322 
+323 
 bp
 ->
 b_blkno
@@ -6707,7 +6731,7 @@ ump
 daddr
 );
 
-323 
+324 
 bp
 ->
 b_æags
@@ -6715,7 +6739,7 @@ b_æags
 B_READ
 ;
 
-324 
+325 
 	`VOP_STRATEGY
 (
 vp
@@ -6723,7 +6747,7 @@ vp
 bp
 );
 
-325 
+326 
 cu¾wp
 ->
 l_ru
@@ -6731,7 +6755,7 @@ l_ru
 ru_šblock
 ++;
 
-326 ià((
+327 ià((
 ”rÜ
  = 
 	`biowa™
@@ -6739,17 +6763,17 @@ ru_šblock
 bp
 )) != 0) {
 
-327 
+328 
 	`b»l£
 (
 bp
 , 0);
 
-328  (
+329  (
 ”rÜ
 );
 
-333 
+334 
 daddr
  = 
 	`fs2h32
@@ -6765,7 +6789,7 @@ x­
 š_off
 ]);
 
-334 ià(
+335 ià(
 num
  =ð1 && 
 daddr
@@ -6773,7 +6797,7 @@ daddr
 ruÅ
 )
 
-336 
+337 
 bn
  = 
 x­
@@ -6781,7 +6805,7 @@ x­
 š_off
  + 1;
 
-337 
+338 
 bn
  < 
 	`MNINDIR
@@ -6793,7 +6817,7 @@ ruÅ
 maxrun
  &&
 
-338 
+339 
 	`is_£qu’tŸl
 (
 ump
@@ -6807,7 +6831,7 @@ b_d©a
 bn
  - 1],
 
-339 ((
+340 ((
 št32_t
  *)
 bp
@@ -6817,23 +6841,23 @@ b_d©a
 bn
 ]);
 
-340 ++
+341 ++
 bn
 , ++*
 ruÅ
 );
 
-342 ià(
+343 ià(
 bp
 )
 
-343 
+344 
 	`b»l£
 (
 bp
 , 0);
 
-345 
+346 
 daddr
  = 
 	`blk±¹odb
@@ -6841,13 +6865,13 @@ daddr
 ump
 , daddr);
 
-346 *
+347 *
 bÅ
  = 
 daddr
  == 0 ? -1 : daddr;
 
-348 
+349 
 	}
 }
 

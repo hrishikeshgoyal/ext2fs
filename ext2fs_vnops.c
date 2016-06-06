@@ -216,9 +216,11 @@ ext2fs_open(void *v)
 	/*
 	 * Files marked append-only must be opened for appending.
 	 */
+	 printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	if ((VTOI(ap->a_vp)->i_e2fs_flags & EXT2_APPEND) &&
 		(ap->a_mode & (FWRITE | O_APPEND)) == FWRITE)
 		return (EPERM);
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return (0);
 }
 
