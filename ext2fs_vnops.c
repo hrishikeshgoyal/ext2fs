@@ -125,7 +125,7 @@ union _qcvt {
 int
 ext2fs_create(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_create_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -152,7 +152,7 @@ ext2fs_create(void *v)
 int
 ext2fs_mknod(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_mknod_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -216,18 +216,18 @@ ext2fs_open(void *v)
 	/*
 	 * Files marked append-only must be opened for appending.
 	 */
-	 printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	 printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	if ((VTOI(ap->a_vp)->i_e2fs_flags & EXT2_APPEND) &&
 		(ap->a_mode & (FWRITE | O_APPEND)) == FWRITE)
 		return (EPERM);
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return (0);
 }
 
 static int
 ext2fs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	/*
 	 * Disallow write attempts on read-only file systems;
 	 * unless the file is a socket, fifo, or a block or
@@ -257,7 +257,7 @@ static int
 ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    ip->i_e2fs_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
 	    ip->i_e2fs_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
@@ -282,7 +282,7 @@ ext2fs_access(void *v)
 		return error;
 
 	error = ext2fs_check_permitted(vp, ip, mode, ap->a_cred);
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return error;
 }
 
@@ -290,7 +290,7 @@ ext2fs_access(void *v)
 int
 ext2fs_getattr(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
@@ -345,7 +345,7 @@ ext2fs_getattr(void *v)
 int
 ext2fs_setattr(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
@@ -485,7 +485,7 @@ ext2fs_setattr(void *v)
 static int
 ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip = VTOI(vp);
 	int error;
 
@@ -509,7 +509,7 @@ static int
 ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 		struct lwp *l)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip = VTOI(vp);
 	uid_t ouid;
 	gid_t ogid;
@@ -555,7 +555,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 int
 ext2fs_remove(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_remove_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -600,7 +600,7 @@ ext2fs_remove(void *v)
 int
 ext2fs_link(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -660,7 +660,7 @@ out2:
 int
 ext2fs_mkdir(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_mkdir_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -790,7 +790,7 @@ out:
 int
 ext2fs_rmdir(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_rmdir_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -878,7 +878,7 @@ out:
 int
 ext2fs_symlink(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_symlink_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -924,7 +924,7 @@ bad:
 int
 ext2fs_readlink(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
@@ -950,7 +950,7 @@ ext2fs_readlink(void *v)
 int
 ext2fs_advlock(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
 		void * a_id;
@@ -966,7 +966,7 @@ ext2fs_advlock(void *v)
 int
 ext2fs_fsync(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
 		kauth_cred_t a_cred;
@@ -1005,7 +1005,7 @@ int
 ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 	int (**fifoops)(void *), struct vnode **vpp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct timeval tv;
 	struct inode *ip;
 	struct vnode *vp;
@@ -1048,7 +1048,7 @@ int
 ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		struct componentname *cnp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip, *pdir;
 	struct vnode *tvp;
 	int error;
@@ -1122,7 +1122,7 @@ bad:
 int
 ext2fs_reclaim(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;

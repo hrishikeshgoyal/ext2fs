@@ -63,6 +63,7 @@
 #define _UFS_EXT2FS_EXT2FS_H_
 
 #include <sys/bswap.h>
+#include <sys/types.h>
 
 /*
  * Each disk drive contains some number of file systems.
@@ -245,6 +246,7 @@ struct m_ext2fs {
 	int32_t	e2fs_ipb;	/* number of inodes per block */
 	int32_t	e2fs_itpg;	/* number of inode table per group */
 	struct	ext2_gd *e2fs_gd; /* group descripors */
+	 int32_t  e2fs_uhash;      /* 3 if hash should be signed, 0 if not */
 };
 
 
@@ -329,6 +331,20 @@ struct m_ext2fs {
 					 | EXT2F_ROCOMPAT_HUGE_FILE)
 #define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE \
 					 | EXT2F_INCOMPAT_EXTENTS)
+
+
+
+
+#define EXT2_SB(sb) (sb)
+
+
+/*
+* Feature set definitions
+*/
+#define EXT2_HAS_COMPAT_FEATURE(sb,mask)            \
+    ( EXT2_SB(sb)->e2fs.e2fs_features_compat & htole32(mask) )
+
+
 
 /*
  * Definitions of behavior on errors

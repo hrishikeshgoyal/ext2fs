@@ -198,17 +198,17 @@ ext2fs_bufrd(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 			xfersize = bytesinfile;
 
 		if (ext2_lblktosize(fs, nextlbn) >= ext2fs_size(ip)) {
-			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+	//		printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			error = bread(vp, lbn, size, 0, &bp);
-			printf("bread() returns %d\n",error);
-			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+	//		printf("bread() returns %d\n",error);
+	//		printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 		}
 		else {
 			int nextsize = fs->e2fs_bsize;
-			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+		//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			error = breadn(vp, lbn,
 				size, &nextlbn, &nextsize, 1, 0, &bp);
-			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);	
+	//		printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);	
 		}
 		if (error)
 			break;

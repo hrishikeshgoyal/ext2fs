@@ -114,6 +114,22 @@ struct	ext2fs_direct {
 	char e2d_name[EXT2FS_MAXNAMLEN];/* name with length<=EXT2FS_MAXNAMLEN */
 };
 
+
+enum slotstatus {
+	NONE,
+	COMPACT,
+	FOUND
+};
+
+struct ext2fs_searchslot {
+	enum slotstatus slotstatus;
+	doff_t slotoffset;	/* offset of area with free space */
+	int slotsize;		/* size of area at slotoffset */
+	int slotfreespace;	/* amount of space free in slot */
+	int slotneeded;		/* sizeof the entry we are seeking */
+};
+
+
 /* Ext2 directory file types (not the same as FFS. Sigh.) */
 #define EXT2_FT_UNKNOWN         0
 #define EXT2_FT_REG_FILE        1
@@ -179,4 +195,17 @@ struct ext2fs_dirtemplate {
 	char		dotdot_name[4];	/* ditto */
 };
 
+
+
+/*
+ * EXT2_DIR_PAD defines the directory entries boundaries
+ *
+ * NOTE: It must be a multiple of 4
+ */
+#define EXT2_DIR_PAD            4
+#define EXT2_DIR_ROUND          (EXT2_DIR_PAD - 1)
+#define EXT2_DIR_REC_LEN(name_len)  (((name_len) + 8 + EXT2_DIR_ROUND) & \
+                     ~EXT2_DIR_ROUND)
+
 #endif /* !_UFS_EXT2FS_EXT2FS_DIR_H_ */
+

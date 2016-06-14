@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.79 2016/01/12 21:29:29 riastradh
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs.h>
+#include<ufs/ext2fs/ext2fs_htree.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -94,7 +95,7 @@ static int	ext2fs_dirbadentry(struct vnode *dp,
 static void
 ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 {	
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	memset(ffsdir, 0, sizeof(struct dirent));
 	ffsdir->d_fileno = fs2h32(e2dir->e2d_ino);
 	ffsdir->d_namlen = e2dir->e2d_namlen;
@@ -118,6 +119,17 @@ ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 	ffsdir->d_reclen = _DIRENT_SIZE(ffsdir);
 }
 
+
+static int
+ext2fs_is_dot_entry(struct componentname *cnp)
+{
+	if (cnp->cn_namelen <= 2 && cnp->cn_nameptr[0] == '.' &&
+	    (cnp->cn_nameptr[1] == '.' || cnp->cn_nameptr[1] == '\0'))
+		return (1);
+	return (0);
+}
+
+
 /*
  * Vnode op for reading directories.
  *
@@ -132,7 +144,7 @@ ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 int
 ext2fs_readdir(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
@@ -224,7 +236,7 @@ ext2fs_readdir(void *v)
 		} else
 			*ap->a_ncookies = nc - ncookies;
 	}
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return (error);
 }
 
@@ -287,6 +299,8 @@ ext2fs_lookup(void *v)
 	doff_t enduseful;		/* pointer past last used dir slot */
 	u_long bmask;			/* block offset mask */
 	int namlen, error;
+	doff_t i_offset;		/* cached i_offset value */
+	struct ext2fs_searchslot ss;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	kauth_cred_t cred = cnp->cn_cred;
@@ -296,7 +310,10 @@ ext2fs_lookup(void *v)
 	int dirblksiz = ump->um_dirblksiz;
 	ino_t foundino;
 	struct ufs_lookup_results *results;
-
+	
+	int DIRBLKSIZ = VTOI(vdp)->i_e2fs->e2fs_bsize;
+	
+	bmask = VFSTOEXT2(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	flags = cnp->cn_flags;
 
 	bp = NULL;
@@ -310,17 +327,24 @@ ext2fs_lookup(void *v)
 	 */
 	results = &dp->i_crap;
 	dp->i_crapcounter++;
+	
+	
 
 	/*
 	 * Check accessiblity of directory.
 	 */
+	 
+//	 printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);
+
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 *
@@ -328,11 +352,12 @@ ext2fs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
-			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
-		return *vpp == NULLVP ? ENOENT : 0;
-	}
+	//if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+	//		 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+	//	return *vpp == NULLVP ? ENOENT : 0;
+	//}
 
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	/*
 	 * Suppress search for slots unless creating
 	 * file and at end of pathname, in which case
@@ -346,6 +371,50 @@ ext2fs_lookup(void *v)
 		slotstatus = NONE;
 		slotneeded = EXT2FS_DIRSIZ(cnp->cn_namelen);
 	}
+	
+	
+	
+	/*
+	 * Try to lookup dir entry using htree directory index.
+	 *
+	 * If we got an error or we want to find '.' or '..' entry,
+	 * we will fall back to linear search.
+	 */
+	 
+	 printf("In lookup() , componenet name : %s\n" ,cnp->cn_nameptr);
+	 
+	 int hasindex=ext2fs_htree_has_idx(dp);
+	 int dot=ext2fs_is_dot_entry(cnp);
+	 printf("has index = %d and dot entry %d\n",hasindex,dot);
+	 printf("in lookup,inode no: %lu,  i_flag value %x \n",VTOI(ap->a_dvp)->i_number ,VTOI(ap->a_dvp)->i_din.e2fs_din->e2di_flags );
+	 
+	if (! dot&&hasindex ) {
+		numdirpasses = 1;
+		entryoffsetinblock = 0;
+		printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+		switch (ext2fs_htree_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
+				&bp, &entryoffsetinblock, &i_offset, &prevoff,
+				&enduseful, &ss)) {
+		case 0:
+			ep = (struct ext2fs_direct*)((char *)bp->b_data +
+				(i_offset & bmask));
+			foundino = ep->e2d_ino;
+			goto found;
+		case ENOENT:
+			i_offset = roundup2(dp->i_size, DIRBLKSIZ);
+			goto notfound;
+		default:
+			/*
+			 * Something failed; just fallback to do a linear
+			 * search.
+			 */																																																																																																																		
+			break;
+		}
+	}
+	
+	
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);	
+	
 
 	/*
 	 * If there is cached information on a previous search of
@@ -477,7 +546,7 @@ searchloop:
 		if (ep->e2d_ino)
 			enduseful = results->ulr_offset;
 	}
-/* notfound: */
+notfound: 
 	/*
 	 * If we started in the middle of the directory and failed
 	 * to find our target, we must check the beginning as well.
@@ -490,6 +559,8 @@ searchloop:
 	}
 	if (bp != NULL)
 		brelse(bp, 0);
+	
+	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	/*
 	 * If creating, and at end of pathname and current
 	 * directory has not been removed, then can consider
@@ -672,6 +743,108 @@ found:
 	return 0;
 }
 
+
+
+
+int
+ext2fs_search_dirblock(struct inode *ip, void *data, int *foundp,
+	const char *name, int namelen, int *entryoffsetinblockp,
+	doff_t *offp, doff_t *prevoffp, doff_t *endusefulp,
+	struct ext2fs_searchslot *ssp)
+{
+	struct vnode *vdp;
+	struct ext2fs_direct *ep, *top;
+	uint32_t bsize = ip->i_e2fs->e2fs_bsize;
+	int offset = *entryoffsetinblockp;
+	int namlen;
+
+	vdp = ITOV(ip);
+
+	ep = (struct ext2fs_direct *)((char *)data + offset);
+	top = (struct ext2fs_direct *)((char *)data +
+		bsize - EXT2_DIR_REC_LEN(0));
+
+	while (ep < top) {
+		/*
+		 * Full validation checks are slow, so we only check
+		 * enough to insure forward progress through the
+		 * directory. Complete checks can be run by setting
+		 * "vfs.e2fs.dirchk" to be true.
+		 */
+		if (ep->e2d_reclen == 0 ||
+		    (dirchk && ext2fs_dirbadentry(vdp, ep, offset))) {
+			int i;
+			ufs_dirbad(ip, *offp, "mangled entry");
+			i = bsize - (offset & (bsize - 1));
+			*offp += i;
+			offset += i;
+			continue;
+		}
+
+		/*
+		 * If an appropriate sized slot has not yet been found,
+		 * check to see if one is available. Also accumulate space
+		 * in the current block so that we can determine if
+		 * compaction is viable.
+		 */
+		if (ssp->slotstatus != FOUND) {
+			int size = ep->e2d_reclen;
+
+			if (ep->e2d_ino != 0)
+				size -= EXT2_DIR_REC_LEN(ep->e2d_namlen);
+			if (size > 0) {
+				if (size >= ssp->slotneeded) {
+					ssp->slotstatus = FOUND;
+					ssp->slotoffset = *offp;
+					ssp->slotsize = ep->e2d_reclen;
+				} else if (ssp->slotstatus == NONE) {
+					ssp->slotfreespace += size;
+					if (ssp->slotoffset == -1)
+						ssp->slotoffset = *offp;
+					if (ssp->slotfreespace >= ssp->slotneeded) {
+						ssp->slotstatus = COMPACT;
+						ssp->slotsize = *offp +
+							ep->e2d_reclen -
+							ssp->slotoffset;
+					}
+				}
+			}
+		}
+
+		/*
+		 * Check for a name match.
+		 */
+		if (ep->e2d_ino) {
+			namlen = ep->e2d_namlen;
+			if (namlen == namelen &&
+			    !bcmp(name, ep->e2d_name, (unsigned)namlen)) {
+				/*
+				 * Save directory entry's inode number and
+				 * reclen in ndp->ni_ufs area, and release
+				 * directory buffer.
+				 */
+				*foundp = 1;
+				return (0);
+			}
+		}
+		*prevoffp = *offp;
+		*offp += ep->e2d_reclen;
+		offset += ep->e2d_reclen;
+		*entryoffsetinblockp = offset;
+		if (ep->e2d_ino)
+			*endusefulp = *offp;
+		/*
+		 * Get pointer to the next entry.
+		 */
+		ep = (struct ext2fs_direct *)((char *)data + offset);
+	}
+
+	return (0);
+}
+
+
+
+
 /*
  * Do consistency checking on a directory entry:
  *	record length must be multiple of 4
@@ -687,7 +860,7 @@ static int
 ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
 		int entryoffsetinblock)
 {	
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ufsmount *ump = VFSTOUFS(dp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
 
@@ -733,7 +906,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		const struct ufs_lookup_results *ulr,
 		struct componentname *cnp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
 	struct buf *bp;
@@ -880,7 +1053,7 @@ int
 ext2fs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		 struct componentname *cnp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *dp;
 	struct ext2fs_direct *ep;
 	struct buf *bp;
@@ -956,7 +1129,7 @@ ext2fs_dirrewrite(struct inode *dp, const struct ufs_lookup_results *ulr,
 int
 ext2fs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	off_t off;
 	struct ext2fs_dirtemplate dbuf;
 	struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;

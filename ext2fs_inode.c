@@ -101,7 +101,7 @@ CTASSERT(EXT2FS_NIADDR == UFS_NIADDR);
 uint64_t
 ext2fs_size(struct inode *ip)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	uint64_t size = ip->i_e2fs_size;
 
 	if ((ip->i_e2fs_mode & IFMT) == IFREG)
@@ -112,7 +112,7 @@ ext2fs_size(struct inode *ip)
 int
 ext2fs_setsize(struct inode *ip, uint64_t size)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	if ((ip->i_e2fs_mode & IFMT) == IFREG ||
 	    ip->i_e2fs_mode == 0) {
 		ip->i_e2fs_dacl = size >> 32;
@@ -141,7 +141,7 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 uint64_t
 ext2fs_nblock(struct inode *ip)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	uint64_t nblock = ip->i_e2fs_nblock;
 	struct m_ext2fs * const fs = ip->i_e2fs;
 
@@ -159,7 +159,7 @@ ext2fs_nblock(struct inode *ip)
 int
 ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct m_ext2fs * const fs = ip->i_e2fs;
 
 	if (nblock <= 0xffffffffULL) {
@@ -194,7 +194,7 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 int
 ext2fs_inactive(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
@@ -229,7 +229,7 @@ out:
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
 	VOP_UNLOCK(vp);
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return (error);
 }
 
@@ -247,7 +247,7 @@ int
 ext2fs_update(struct vnode *vp, const struct timespec *acc,
     const struct timespec *mod, int updflags)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct inode *ip;
@@ -298,7 +298,7 @@ int
 ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
     kauth_cred_t cred)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lastiblock[EXT2FS_NIADDR], indir_lbn[EXT2FS_NIADDR];
@@ -509,7 +509,7 @@ static int
 ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		int level, long *countp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	int i;
 	struct buf *bp;
 	struct m_ext2fs *fs = ip->i_e2fs;

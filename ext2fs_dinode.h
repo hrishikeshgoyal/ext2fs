@@ -169,6 +169,10 @@ struct ext2fs_dinode {
 #define EXT2_EXTENTS		0x00080000 /* Inode uses extents */
 #define EXT2_EOFBLOCKS		0x00400000 /* Blocks allocated beyond EOF */
 
+/* Inode flags */
+#define EXT4_INDEX      0x00001000  /* hash-indexed directory */
+
+
 /* Size of on-disk inode. */
 #define EXT2_REV0_DINODE_SIZE	sizeof(struct ext2fs_dinode)
 #define EXT2_DINODE_SIZE(fs)	((fs)->e2fs.e2fs_rev > E2FS_REV0 ?	\

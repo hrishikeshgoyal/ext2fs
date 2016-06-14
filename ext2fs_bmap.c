@@ -115,6 +115,7 @@ ext2fs_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 	
+	printf("in bmap ,inode no: %lu,  i_flag value %x \n",VTOI(ap->a_vp)->i_number ,VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags );
 	
 	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & IN_E4EXTENTS)
 		return ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
