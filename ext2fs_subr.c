@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.31 2015/03/28 19:24:04 maxv Exp $"
 int
 ext2fs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip;
 	struct m_ext2fs *fs;
 	struct buf *bp;
@@ -106,7 +106,7 @@ void
 ext2fs_itimes(struct inode *ip, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct timespec now;
 
 	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY))) {

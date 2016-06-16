@@ -164,7 +164,7 @@ static const struct ufs_ops ext2fs_ufsops = {
 void
 ext2fs_set_inode_guid(struct inode *ip)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 
 	ip->i_gid = ip->i_e2fs_gid;
 	ip->i_uid = ip->i_e2fs_uid;
@@ -177,7 +177,7 @@ ext2fs_set_inode_guid(struct inode *ip)
 static int
 ext2fs_modcmd(modcmd_t cmd, void *arg)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	int error;
 
 	switch (cmd) {
@@ -222,7 +222,7 @@ extern u_long ext2gennumber;
 void
 ext2fs_init(void)
 {
-	printf("inside ext2fs_init\n");
+//	printf("inside ext2fs_init\n");
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
@@ -254,7 +254,7 @@ ext2fs_done(void)
 int
 ext2fs_mountroot(void)
 {	
-	printf("ext2fs_mountroot\n");
+//	printf("ext2fs_mountroot\n");
 	extern struct vnode *rootvp;
 	struct m_ext2fs *fs;
 	struct mount *mp;
@@ -516,7 +516,7 @@ fail:
 int
 ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vnode *vp, *devvp;
 	struct inode *ip;
 	struct buf *bp;
@@ -619,7 +619,7 @@ int
 ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 {
 	
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct lwp *l = curlwp;
 	struct ufsmount *ump;
 	struct buf *bp;
@@ -774,7 +774,7 @@ ext2fs_unmount(struct mount *mp, int mntflags)
 int
 ext2fs_flushfiles(struct mount *mp, int flags)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	extern int doforce;
 	int error;
 
@@ -790,7 +790,7 @@ ext2fs_flushfiles(struct mount *mp, int flags)
 int
 ext2fs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
 	uint32_t overhead, overhead_per_group, ngdb;
@@ -846,7 +846,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp)
 static bool
 ext2fs_sync_selector(void *cl, struct vnode *vp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip;
 
 	ip = VTOI(vp);
@@ -874,7 +874,7 @@ ext2fs_sync_selector(void *cl, struct vnode *vp)
 int
 ext2fs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vnode *vp;
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct m_ext2fs *fs;
@@ -939,7 +939,7 @@ int
 ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
     const void *key, size_t key_len, const void **new_key)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	ino_t ino;
 	struct m_ext2fs *fs;
 	struct inode *ip;
@@ -1014,7 +1014,7 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 	}
 	uvm_vnp_setsize(vp, ext2fs_size(ip));
 	*new_key = &ip->i_number;
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return 0;
 }
 

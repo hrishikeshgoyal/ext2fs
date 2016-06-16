@@ -206,7 +206,7 @@ ext2fs_mknod(void *v)
 int
 ext2fs_open(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
@@ -266,7 +266,7 @@ ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
 int
 ext2fs_access(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;

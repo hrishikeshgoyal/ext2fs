@@ -388,32 +388,38 @@ ext2fs_lookup(void *v)
 	 printf("has index = %d and dot entry %d\n",hasindex,dot);
 	 printf("in lookup,inode no: %lu,  i_flag value %x \n",VTOI(ap->a_dvp)->i_number ,VTOI(ap->a_dvp)->i_din.e2fs_din->e2di_flags );
 	 
-	if (! dot&&hasindex ) {
+	if (! dot&&hasindex) {
 		numdirpasses = 1;
 		entryoffsetinblock = 0;
-		printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
-		switch (ext2fs_htree_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
+		
+		int htree_lookup_ret= ext2fs_htree_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
 				&bp, &entryoffsetinblock, &i_offset, &prevoff,
-				&enduseful, &ss)) {
+				&enduseful, &ss);
+		printf("in fun: %s,lineno: %d\n", __func__, __LINE__);
+		printf("htree_lookup_returns: %d\n",htree_lookup_ret);
+		switch (htree_lookup_ret) {
 		case 0:
 			ep = (struct ext2fs_direct*)((char *)bp->b_data +
 				(i_offset & bmask));
 			foundino = ep->e2d_ino;
+			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			goto found;
 		case ENOENT:
 			i_offset = roundup2(dp->i_size, DIRBLKSIZ);
+			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			goto notfound;
 		default:
+			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			/*
 			 * Something failed; just fallback to do a linear
 			 * search.
-			 */																																																																																																																		
+			*/ 																																																																																											
 			break;
 		}
 	}
 	
 	
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);	
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);	
 	
 
 	/*
