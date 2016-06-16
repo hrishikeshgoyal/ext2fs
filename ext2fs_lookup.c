@@ -273,7 +273,6 @@ ext2fs_readdir(void *v)
 int
 ext2fs_lookup(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_lookup_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
@@ -372,33 +371,27 @@ ext2fs_lookup(void *v)
 	 * we will fall back to linear search.
 	 */
 	 
- 
-	 int hasindex=ext2fs_htree_has_idx(dp);
-	 int dot=ext2fs_is_dot_entry(cnp);
+
 
 	 
-	if (! dot&&hasindex) {
+	if (! ext2fs_is_dot_entry(cnp)&&ext2fs_htree_has_idx(dp)) {
 		numdirpasses = 1;
 		entryoffsetinblock = 0;
 		
 		int htree_lookup_ret= ext2fs_htree_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
 				&bp, &entryoffsetinblock, &i_offset, &prevoff,
 				&enduseful, &ss);
-		printf("in fun: %s,lineno: %d\n", __func__, __LINE__);
-		printf("htree_lookup_returns: %d\n",htree_lookup_ret);
+				
 		switch (htree_lookup_ret) {
 		case 0:
 			ep = (struct ext2fs_direct*)((char *)bp->b_data +
 				(i_offset & bmask));
 			foundino = ep->e2d_ino;
-			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			goto found;
 		case ENOENT:
 			i_offset = roundup2(dp->i_size, DIRBLKSIZ);
-			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			goto notfound;
 		default:
-			printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 			/*
 			 * Something failed; just fallback to do a linear
 			 * search.
@@ -406,10 +399,7 @@ ext2fs_lookup(void *v)
 			break;
 		}
 	}
-	
-	
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);	
-	
+
 
 	/*
 	 * If there is cached information on a previous search of
@@ -554,8 +544,7 @@ notfound:
 	}
 	if (bp != NULL)
 		brelse(bp, 0);
-	
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	/*
 	 * If creating, and at end of pathname and current
 	 * directory has not been removed, then can consider
@@ -732,9 +721,7 @@ found:
 	/*
 	 * Insert name into cache if appropriate.
 	 */
-	 printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return 0;
 }
 
@@ -855,7 +842,6 @@ static int
 ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
 		int entryoffsetinblock)
 {	
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ufsmount *ump = VFSTOUFS(dp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
 
@@ -901,7 +887,6 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		const struct ufs_lookup_results *ulr,
 		struct componentname *cnp)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
 	struct buf *bp;
@@ -1048,7 +1033,6 @@ int
 ext2fs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		 struct componentname *cnp)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *dp;
 	struct ext2fs_direct *ep;
 	struct buf *bp;
@@ -1091,7 +1075,6 @@ int
 ext2fs_dirrewrite(struct inode *dp, const struct ufs_lookup_results *ulr,
     struct inode *ip, struct componentname *cnp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct buf *bp;
 	struct ext2fs_direct *ep;
 	struct vnode *vdp = ITOV(dp);
@@ -1124,7 +1107,6 @@ ext2fs_dirrewrite(struct inode *dp, const struct ufs_lookup_results *ulr,
 int
 ext2fs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	off_t off;
 	struct ext2fs_dirtemplate dbuf;
 	struct ext2fs_direct *dp = (struct ext2fs_direct *)&dbuf;

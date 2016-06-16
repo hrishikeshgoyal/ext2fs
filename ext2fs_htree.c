@@ -247,7 +247,6 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 		  doff_t *prevoffp, doff_t *endusefulp,
 		  struct ext2fs_searchslot *ss)
 {
-	printf("in fun: %s,lineno: %d\n", __func__, __LINE__);
 	struct vnode *vp;
 	struct ext2fs_htree_lookup_info info;
 	struct ext2fs_htree_entry *leaf_node;
@@ -268,17 +267,14 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 
 	memset(&info, 0, sizeof(info));
 	if (ext2fs_htree_find_leaf(ip, name, namelen, &dirhash,
-	    &hash_version, &info)) {
-		printf("in fun: %s,lineno: %d\n", __func__, __LINE__);
+	    &hash_version, &info)) 
 		return (-1);
-	}
 
 	do {
 		leaf_node = info.h_levels[info.h_levels_num - 1].h_entry;
 		blk = ext2fs_htree_get_block(leaf_node);
 		if (ext2fs_blkatoff(vp, blk * bsize, NULL, &bp) != 0) {
 			ext2fs_htree_release(&info);
-			printf("in fun: %s,lineno: %d\n", __func__, __LINE__);
 			return (-1);
 		}
 
@@ -297,12 +293,10 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 		    endusefulp, ss) != 0) {
 			brelse(bp,0);
 			ext2fs_htree_release(&info);
-			printf("in fun: %s,lineno: %d\n", __func__, __LINE__);
 			return (-1);
 		}
 
 		if (found) {
-			printf("in fun: %s,lineno: %d\n", __func__, __LINE__);
 			*bpp = bp;
 			ext2fs_htree_release(&info);
 			return (0);
