@@ -95,7 +95,6 @@ static int	ext2fs_dirbadentry(struct vnode *dp,
 static void
 ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 {	
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	memset(ffsdir, 0, sizeof(struct dirent));
 	ffsdir->d_fileno = fs2h32(e2dir->e2d_ino);
 	ffsdir->d_namlen = e2dir->e2d_namlen;
@@ -144,7 +143,6 @@ ext2fs_is_dot_entry(struct componentname *cnp)
 int
 ext2fs_readdir(void *v)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
@@ -236,7 +234,6 @@ ext2fs_readdir(void *v)
 		} else
 			*ap->a_ncookies = nc - ncookies;
 	}
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	return (error);
 }
 
@@ -326,25 +323,20 @@ ext2fs_lookup(void *v)
 	 * stale results. This should not be done this way. XXX.
 	 */
 	results = &dp->i_crap;
-	dp->i_crapcounter++;
-	
-	
+	dp->i_crapcounter++;	
 
 	/*
 	 * Check accessiblity of directory.
 	 */
-	 
-//	 printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return (error);
 
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 *
@@ -352,12 +344,11 @@ ext2fs_lookup(void *v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	//if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
-	//		 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
-	//	return *vpp == NULLVP ? ENOENT : 0;
-	//}
+	if (cache_lookup(vdp, cnp->cn_nameptr, cnp->cn_namelen,
+			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+		return *vpp == NULLVP ? ENOENT : 0;
+	}
 
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	/*
 	 * Suppress search for slots unless creating
 	 * file and at end of pathname, in which case
@@ -381,12 +372,10 @@ ext2fs_lookup(void *v)
 	 * we will fall back to linear search.
 	 */
 	 
-	 printf("In lookup() , componenet name : %s\n" ,cnp->cn_nameptr);
-	 
+ 
 	 int hasindex=ext2fs_htree_has_idx(dp);
 	 int dot=ext2fs_is_dot_entry(cnp);
-	 printf("has index = %d and dot entry %d\n",hasindex,dot);
-	 printf("in lookup,inode no: %lu,  i_flag value %x \n",VTOI(ap->a_dvp)->i_number ,VTOI(ap->a_dvp)->i_din.e2fs_din->e2di_flags );
+
 	 
 	if (! dot&&hasindex) {
 		numdirpasses = 1;
