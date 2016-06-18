@@ -31,10 +31,8 @@
 int
 ext2fs_htree_has_idx(struct inode *ip)
 {
-	//if (( ip->inode_u.e2fs->e2fs.e2fs_features_compat & htole32(EXT2F_COMPAT_DIRHASHINDEX) )&&
 	int temp1=EXT2_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX);
 	int temp2= ip->i_din.e2fs_din->e2di_flags  & EXT4_INDEX;
-	printf ("hash compatible: %x  and directoryhash enable: %x  value of ip->i_flag: %x and EXT4_INDEX:%x\n",temp1,temp2,ip->i_din.e2fs_din->e2di_flags ,EXT4_INDEX);
 	if (temp1 &&temp2  )
 		return (1);
 	else
