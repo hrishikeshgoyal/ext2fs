@@ -79,6 +79,7 @@ struct mbuf;
 struct componentname;
 struct ufs_lookup_results;
 struct ext2fs_searchslot;
+struct ext2fs_direct;
 
 extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
 extern struct pool ext2fs_dinode_pool;		/* memory pool for dinodes */
@@ -135,6 +136,8 @@ int ext2fs_dirrewrite(struct inode *, const struct ufs_lookup_results *,
 			   struct inode *, struct componentname *);
 int ext2fs_dirempty(struct inode *, ino_t, kauth_cred_t);
 
+void ext2fs_accumulatespace (struct ext2fs_searchslot *, struct ext2fs_direct *, doff_t * );
+
 /* ext2fs_subr.c */
 int ext2fs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 void ext2fs_fragacct(struct m_ext2fs *, int, int32_t[], int);
@@ -180,7 +183,7 @@ int ext2fs_reclaim(void *);
 
 
 /*ext2fs_hash.c */
-int ext2fs_htree_hash(const char *, int, uint32_t *, int, uint32_t *,
+int ext2fs_htree_hash(const char *, unsigned int, uint32_t *, int, uint32_t *,
         uint32_t *);
         
         

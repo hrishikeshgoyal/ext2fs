@@ -294,7 +294,8 @@ ext2fs_lookup(void *v)
 	struct vnode *tdp;		/* returned by vcache_get */
 	doff_t enduseful;		/* pointer past last used dir slot */
 	u_long bmask;			/* block offset mask */
-	int namlen, error;
+	unsigned int namlen;
+	int  error;
 	doff_t i_offset;		/* cached i_offset value */
 	struct ext2fs_searchslot ss;
 	struct vnode **vpp = ap->a_vpp;
@@ -329,12 +330,12 @@ ext2fs_lookup(void *v)
 	 */
 
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
-		return (error);
+		return error;
 
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
-		return (EROFS);
+		return EROFS;
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
@@ -558,7 +559,7 @@ notfound:
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
-			return (error);
+			return error;
 		/*
 		 * Return an indication of where the new directory
 		 * entry should be put.  If we didn't find a slot,
@@ -617,7 +618,7 @@ found:
 				results->ulr_offset + EXT2FS_DIRSIZ(ep->e2d_namlen));
 		if (error) {
 			brelse(bp, 0);
-			return (error);
+			return error;
 		}
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(vdp, ext2fs_size(dp));
@@ -662,7 +663,7 @@ found:
 		 */
 		if ((error = VOP_ACCESS(vdp, VWRITE, cred)) != 0) {
 			vrele(tdp);
-			return (error);
+			return error;
 		}
 		/*
 		 * If directory is "sticky", then user must own
@@ -680,7 +681,7 @@ found:
 			}
 		}
 		*vpp = tdp;
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -692,19 +693,19 @@ found:
 	if (nameiop == RENAME && (flags & ISLASTCN)) {
 		error = VOP_ACCESS(vdp, VWRITE, cred);
 		if (error)
-			return (error);
+			return error;
 		/*
 		 * Careful about locking second inode.
 		 * This can only occur if the target is ".".
 		 */
 		if (dp->i_number == foundino)
-			return (EISDIR);
+			return EISDIR;
 		error = vcache_get(vdp->v_mount,
 		    &foundino, sizeof(foundino), &tdp);
 		if (error)
-			return (error);
+			return error;
 		*vpp = tdp;
-		return (0);
+		return 0;
 	}
 
 	if (dp->i_number == foundino) {
@@ -714,7 +715,7 @@ found:
 		error = vcache_get(vdp->v_mount,
 		    &foundino, sizeof(foundino), &tdp);
 		if (error)
-			return (error);
+			return error;
 		*vpp = tdp;
 	}
 
@@ -725,7 +726,31 @@ found:
 	return 0;
 }
 
+void ext2fs_accumulatespace (struct ext2fs_searchslot *ssp, struct ext2fs_direct *ep, doff_t *offp) 
+{
 
+	int size = ep->e2d_reclen;
+
+	if (ep->e2d_ino != 0)
+		size -= EXT2_DIR_REC_LEN(ep->e2d_namlen);
+	if (size > 0) {
+		if (size >= ssp->slotneeded) {
+			ssp->slotstatus = FOUND;
+			ssp->slotoffset = *offp;
+			ssp->slotsize = ep->e2d_reclen;
+		} else if (ssp->slotstatus == NONE) {
+			ssp->slotfreespace += size;
+			if (ssp->slotoffset == -1)
+				ssp->slotoffset = *offp;
+			if (ssp->slotfreespace >= ssp->slotneeded) {
+				ssp->slotstatus = COMPACT;
+				ssp->slotsize = *offp +
+					ep->e2d_reclen -
+					ssp->slotoffset;
+			}
+		}
+	}
+}
 
 
 int
@@ -770,27 +795,7 @@ ext2fs_search_dirblock(struct inode *ip, void *data, int *foundp,
 		 * compaction is viable.
 		 */
 		if (ssp->slotstatus != FOUND) {
-			int size = ep->e2d_reclen;
-
-			if (ep->e2d_ino != 0)
-				size -= EXT2_DIR_REC_LEN(ep->e2d_namlen);
-			if (size > 0) {
-				if (size >= ssp->slotneeded) {
-					ssp->slotstatus = FOUND;
-					ssp->slotoffset = *offp;
-					ssp->slotsize = ep->e2d_reclen;
-				} else if (ssp->slotstatus == NONE) {
-					ssp->slotfreespace += size;
-					if (ssp->slotoffset == -1)
-						ssp->slotoffset = *offp;
-					if (ssp->slotfreespace >= ssp->slotneeded) {
-						ssp->slotstatus = COMPACT;
-						ssp->slotsize = *offp +
-							ep->e2d_reclen -
-							ssp->slotoffset;
-					}
-				}
-			}
+			ext2fs_accumulatespace(ssp, ep, offp );
 		}
 
 		/*

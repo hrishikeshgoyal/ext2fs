@@ -1,3 +1,35 @@
+/*	$NetBSD: ext2fs_hash.c,v 1.1 2016/06/21 15:35:48 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $FreeBSD: head/sys/fs/ext2fs/ext2_hash.c 295523 2016-02-11 15:27:14Z pfg $
+ */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_hash.c,v 1.1 2016/06/21 15:35:48 christos Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -43,7 +75,7 @@
 
 
 static void
-ext2fs_prep_hashbuf(const char *src, int slen, uint32_t *dst, int dlen,
+ext2fs_prep_hashbuf(const char *src, unsigned int slen, uint32_t *dst, int dlen,
 	     int unsigned_char)
 {
 	uint32_t padding = slen | (slen << 8) | (slen << 16) | (slen << 24);
@@ -93,7 +125,7 @@ ext2fs_prep_hashbuf(const char *src, int slen, uint32_t *dst, int dlen,
 
 
 static uint32_t
-ext2fs_legacy_hash(const char *name, int len, int unsigned_char)
+ext2fs_legacy_hash(const char *name, unsigned int len, int unsigned_char)
 {
 	uint32_t h0, h1 = 0x12A3FE2D, h2 = 0x37ABE8F9;
 	uint32_t multi = 0x6D22F5;
@@ -114,7 +146,7 @@ ext2fs_legacy_hash(const char *name, int len, int unsigned_char)
 		h1 = h0;
 	}
 
-	return (h1 << 1);
+	return h1 << 1;
 }
 
 
@@ -201,8 +233,8 @@ ext2fs_tea(uint32_t hash[4], uint32_t data[8])
 
 
 int
-ext2fs_htree_hash(const char *name, int len,
-		uint32_t *hash_seed, int hash_version,
+ext2fs_htree_hash(const char *name, unsigned int len,
+    		uint32_t *hash_seed, int hash_version,
 		uint32_t *hash_major, uint32_t *hash_minor)
 {
 	uint32_t hash[4];
@@ -268,11 +300,11 @@ ext2fs_htree_hash(const char *name, int len,
 	if (hash_minor)
 		*hash_minor = minor;
 
-	return (0);
+	return 0;
 
 error:
 	*hash_major = 0;
 	if (hash_minor)
 		*hash_minor = 0;
-	return (-1);
+	return -1;
 }
