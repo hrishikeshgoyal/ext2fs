@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.19 2012/05/09 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.20 2016/06/24 17:21:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -114,21 +114,19 @@ struct	ext2fs_direct {
 	char e2d_name[EXT2FS_MAXNAMLEN];/* name with length<=EXT2FS_MAXNAMLEN */
 };
 
-
-enum slotstatus {
+enum ext2fs_slotstatus {
 	NONE,
 	COMPACT,
 	FOUND
 };
 
 struct ext2fs_searchslot {
-	enum slotstatus slotstatus;
-	doff_t slotoffset;	/* offset of area with free space */
-	int slotsize;		/* size of area at slotoffset */
-	int slotfreespace;	/* amount of space free in slot */
-	int slotneeded;		/* sizeof the entry we are seeking */
+	enum ext2fs_slotstatus slotstatus;
+	doff_t slotoffset;		/* offset of area with free space */
+	int slotsize;			/* size of area at slotoffset */
+	int slotfreespace;		/* amount of space free in slot */
+	int slotneeded;			/* sizeof the entry we are seeking */
 };
-
 
 /* Ext2 directory file types (not the same as FFS. Sigh.) */
 #define EXT2_FT_UNKNOWN         0
@@ -195,17 +193,14 @@ struct ext2fs_dirtemplate {
 	char		dotdot_name[4];	/* ditto */
 };
 
-
-
 /*
  * EXT2_DIR_PAD defines the directory entries boundaries
  *
  * NOTE: It must be a multiple of 4
  */
-#define EXT2_DIR_PAD            4
-#define EXT2_DIR_ROUND          (EXT2_DIR_PAD - 1)
-#define EXT2_DIR_REC_LEN(name_len)  (((name_len) + 8 + EXT2_DIR_ROUND) & \
-                     ~EXT2_DIR_ROUND)
+#define	EXT2_DIR_PAD	4
+#define	EXT2_DIR_ROUND	(EXT2_DIR_PAD - 1)
+#define	EXT2_DIR_REC_LEN(namelen) \
+    (((namelen) + 8 + EXT2_DIR_ROUND) & ~EXT2_DIR_ROUND)
 
 #endif /* !_UFS_EXT2FS_EXT2FS_DIR_H_ */
-

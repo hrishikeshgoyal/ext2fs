@@ -1,7 +1,8 @@
-/*	$NetBSD: ext2fs_hash.c,v 1.1 2016/06/21 15:35:48 christos Exp $	*/
+/*	$NetBSD: ext2fs_hash.c,v 1.1 2016/06/24 17:21:30 christos Exp $	*/
 
 /*-
- * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
+ * Copyright (c) 2010, 2013 Zheng Liu <lz@freebsd.org>
+ * Copyright (c) 2012, Vyacheslav Matyushin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,10 +14,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -25,10 +26,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/fs/ext2fs/ext2_hash.c 295523 2016-02-11 15:27:14Z pfg $
+ * $FreeBSD: head/sys/fs/ext2fs/ext2_hash.c 294504 2016-01-21 14:50:28Z pfg $
  */
+
+/*
+ * The following notice applies to the code in ext2_half_md4():
+ *
+ * Copyright (C) 1990-2, RSA Data Security, Inc. All rights reserved.
+ *
+ * License to copy and use this software is granted provided that it
+ * is identified as the "RSA Data Security, Inc. MD4 Message-Digest
+ * Algorithm" in all material mentioning or referencing this software
+ * or this function.
+ *
+ * License is also granted to make and use derivative works provided
+ * that such works are identified as "derived from the RSA Data
+ * Security, Inc. MD4 Message-Digest Algorithm" in all material
+ * mentioning or referencing the derived work.
+ *
+ * RSA Data Security, Inc. makes no representations concerning either
+ * the merchantability of this software or the suitability of this
+ * software for any particular purpose. It is provided "as is"
+ * without express or implied warranty of any kind.
+ *
+ * These notices must be retained in any copies of any part of this
+ * documentation and/or software.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_hash.c,v 1.1 2016/06/21 15:35:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_hash.c,v 1.1 2016/06/24 17:21:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,19 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_hash.c,v 1.1 2016/06/21 15:35:48 christos Exp
 #include <sys/mount.h>
 
 #include <ufs/ext2fs/ext2fs_htree.h>
+#include <ufs/ext2fs/ext2fs_hash.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
-
-
-
-/* F, G, and H are MD4 functions */
-#define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
-#define G(x, y, z) (((x) & (y)) | ((x) & (z)) | ((y) & (z)))
-#define H(x, y, z) ((x) ^ (y) ^ (z))
-
-/* ROTATE_LEFT rotates x left n bits */
-#define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
 /*
  * FF, GG, and HH are transformations for rounds 1, 2, and 3.
@@ -71,12 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_hash.c,v 1.1 2016/06/21 15:35:48 christos Exp
 	(a) = ROTATE_LEFT ((a), (s)); \
 }
 
-
-
-
 static void
-ext2fs_prep_hashbuf(const char *src, unsigned int slen, uint32_t *dst, int dlen,
-	     int unsigned_char)
+ext2fs_prep_hashbuf(const char *src, int slen, uint32_t *dst, int dlen,
+    int unsigned_char)
 {
 	uint32_t padding = slen | (slen << 8) | (slen << 16) | (slen << 24);
 	uint32_t buf_val;
@@ -122,10 +136,8 @@ ext2fs_prep_hashbuf(const char *src, unsigned int slen, uint32_t *dst, int dlen,
 	}
 }
 
-
-
 static uint32_t
-ext2fs_legacy_hash(const char *name, unsigned int len, int unsigned_char)
+ext2fs_legacy_hash(const char *name, int len, int unsigned_char)
 {
 	uint32_t h0, h1 = 0x12A3FE2D, h2 = 0x37ABE8F9;
 	uint32_t multi = 0x6D22F5;
@@ -148,9 +160,6 @@ ext2fs_legacy_hash(const char *name, unsigned int len, int unsigned_char)
 
 	return h1 << 1;
 }
-
-
-
 
 /*
  * MD4 basic transformation.  It transforms state based on block.
@@ -204,8 +213,6 @@ ext2fs_half_md4(uint32_t hash[4], uint32_t data[8])
 	hash[3] += d;
 }
 
-
-
 /*
  * Tiny Encryption Algorithm.
  */
@@ -229,13 +236,10 @@ ext2fs_tea(uint32_t hash[4], uint32_t data[8])
 	hash[1] += y;
 }
 
-
-
-
 int
-ext2fs_htree_hash(const char *name, unsigned int len,
-    		uint32_t *hash_seed, int hash_version,
-		uint32_t *hash_major, uint32_t *hash_minor)
+ext2fs_htree_hash(const char *name, int len,
+    uint32_t *hash_seed, int hash_version,
+    uint32_t *hash_major, uint32_t *hash_minor)
 {
 	uint32_t hash[4];
 	uint32_t data[8];

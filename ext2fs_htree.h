@@ -1,7 +1,8 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.1 2016/06/21 15:35:48 christos Exp $	*/
+/*	$NetBSD: ext2fs_htree.h,v 1.1 2016/06/24 17:21:30 christos Exp $	*/
 
 /*-
- * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
+ * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
+ * Copyright (c) 2012, Vyacheslav Matyushin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,10 +14,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -25,10 +26,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/fs/ext2fs/ext2_htree.h 295523 2016-02-11 15:27:14Z pfg $
+ * $FreeBSD: head/sys/fs/ext2fs/htree.h 262623 2014-02-28 21:25:32Z pfg $
  */
-
-
 #ifndef _FS_EXT2FS_HTREE_H_
 #define	_FS_EXT2FS_HTREE_H_
 
@@ -100,8 +99,3 @@ struct ext2fs_htree_sort_entry {
 };
 
 #endif /* !_FS_EXT2FS_HTREE_H_ */
-
-
-
-
-

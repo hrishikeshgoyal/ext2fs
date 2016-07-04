@@ -1,7 +1,8 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.1 2016/06/21 15:35:48 christos Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.1 2016/06/24 17:21:30 christos Exp $	*/
 
 /*-
- * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
+ * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
+ * Copyright (c) 2012, Vyacheslav Matyushin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,10 +14,10 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -25,10 +26,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/fs/ext2fs/ext2_htree.c 295523 2016-02-11 15:27:14Z pfg $
+ * $FreeBSD: head/sys/fs/ext2fs/ext2_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.1 2016/06/21 15:35:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.1 2016/06/24 17:21:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,19 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.1 2016/06/21 15:35:48 christos Ex
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs_htree.h>
-
-
-
+#include <ufs/ext2fs/ext2fs_hash.h>
 
 int
 ext2fs_htree_has_idx(struct inode *ip)
 {
-	int temp1=EXT2_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX);
-	int temp2= ip->i_din.e2fs_din->e2di_flags  & EXT4_INDEX;
-	if (temp1 &&temp2  )
-		return 1;
-	else
-		return 0;
+	return EXT2_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX)
+	    && (ip->i_din.e2fs_din->e2di_flags & EXT2_INDEX);
 }
 
 static off_t
@@ -81,17 +76,12 @@ ext2fs_htree_get_block(struct ext2fs_htree_entry *ep)
 static void
 ext2fs_htree_release(struct ext2fs_htree_lookup_info *info)
 {
-	u_int i;
-
-	for (i = 0; i < info->h_levels_num; i++) {
+	for (u_int i = 0; i < info->h_levels_num; i++) {
 		struct buf *bp = info->h_levels[i].h_bp;
 		if (bp != NULL)
 			brelse(bp, 0);
 	}
 }
-
-
-
 
 static uint16_t
 ext2fs_htree_get_limit(struct ext2fs_htree_entry *ep)
@@ -99,17 +89,13 @@ ext2fs_htree_get_limit(struct ext2fs_htree_entry *ep)
 	return ((struct ext2fs_htree_count *)(ep))->h_entries_max;
 }
 
-
 static uint32_t
 ext2fs_htree_root_limit(struct inode *ip, int len)
 {
-	uint32_t space;
-
-	space = ip->i_e2fs->e2fs_bsize - EXT2_DIR_REC_LEN(1) -
+	uint32_t space = ip->i_e2fs->e2fs_bsize - EXT2_DIR_REC_LEN(1) -
 	    EXT2_DIR_REC_LEN(2) - len;
 	return space / sizeof(struct ext2fs_htree_entry);
 }
-
 
 static uint16_t
 ext2fs_htree_get_count(struct ext2fs_htree_entry *ep)
@@ -117,19 +103,15 @@ ext2fs_htree_get_count(struct ext2fs_htree_entry *ep)
 	return ((struct ext2fs_htree_count *)(ep))->h_entries_num;
 }
 
-
 static uint32_t
 ext2fs_htree_get_hash(struct ext2fs_htree_entry *ep)
 {
 	return ep->h_hash;
 }
 
-
-
-
 static int
 ext2fs_htree_check_next(struct inode *ip, uint32_t hash, const char *name,
-		struct ext2fs_htree_lookup_info *info)
+    struct ext2fs_htree_lookup_info *info)
 {
 	struct vnode *vp = ITOV(ip);
 	struct ext2fs_htree_lookup_level *level;
@@ -138,7 +120,7 @@ ext2fs_htree_check_next(struct inode *ip, uint32_t hash, const char *name,
 	int idx = info->h_levels_num - 1;
 	int levels = 0;
 
-	for(;;) {
+	for (;;) {
 		level = &info->h_levels[idx];
 		level->h_entry++;
 		if (level->h_entry < level->h_entries +
@@ -148,7 +130,7 @@ ext2fs_htree_check_next(struct inode *ip, uint32_t hash, const char *name,
 			return 0;
 		idx--;
 		levels++;
-	} 
+	}
 
 	next_hash = ext2fs_htree_get_hash(level->h_entry);
 	if ((hash & 1) == 0) {
@@ -160,9 +142,9 @@ ext2fs_htree_check_next(struct inode *ip, uint32_t hash, const char *name,
 		levels--;
 		if (ext2fs_blkatoff(vp, ext2fs_htree_get_block(level->h_entry) *
 		    ip->i_e2fs->e2fs_bsize, NULL, &bp) != 0)
-			return (0);
+			return 0;
 		level = &info->h_levels[idx + 1];
-		brelse(level->h_bp,0);
+		brelse(level->h_bp, 0);
 		level->h_bp = bp;
 		level->h_entry = level->h_entries =
 		    ((struct ext2fs_htree_node *)bp->b_data)->h_entries;
@@ -171,20 +153,13 @@ ext2fs_htree_check_next(struct inode *ip, uint32_t hash, const char *name,
 	return 1;
 }
 
-
 static int
 ext2fs_htree_find_leaf(struct inode *ip, const char *name, int namelen,
-		     uint32_t *hash, uint8_t *hash_ver,
-		     struct ext2fs_htree_lookup_info *info)
+    uint32_t *hash, uint8_t *hash_ver,
+    struct ext2fs_htree_lookup_info *info)
 {
 	struct vnode *vp;
 	struct ext2fs *fs;/* F, G, and H are MD4 functions */
-#define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
-#define G(x, y, z) (((x) & (y)) | ((x) & (z)) | ((y) & (z)))
-#define H(x, y, z) ((x) ^ (y) ^ (z))
-
-/* ROTATE_LEFT rotates x left n bits */
-#define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 	struct m_ext2fs *m_fs;
 	struct buf *bp = NULL;
 	struct ext2fs_htree_root *rootp;
@@ -252,7 +227,7 @@ ext2fs_htree_find_leaf(struct inode *ip, const char *name, int namelen,
 		level_info->h_entries = entp;
 		level_info->h_entry = found;
 		if (levels == 0)
-			return 0;
+			return (0);
 		levels--;
 		if (ext2fs_blkatoff(vp,
 		    ext2fs_htree_get_block(found) * m_fs->e2fs_bsize,
@@ -273,9 +248,8 @@ error:
  */
 int
 ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
-		  struct buf **bpp, int *entryoffp, doff_t *offp,
-		  doff_t *prevoffp, doff_t *endusefulp,
-		  struct ext2fs_searchslot *ss)
+    struct buf **bpp, int *entryoffp, doff_t *offp,
+    doff_t *prevoffp, doff_t *endusefulp, struct ext2fs_searchslot *ss)
 {
 	struct vnode *vp;
 	struct ext2fs_htree_lookup_info info;
@@ -287,7 +261,6 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 	uint32_t bsize;
 	uint8_t hash_version;
 	int search_next;
-	int found = 0;
 
 	m_fs = ip->i_e2fs;
 	bsize = m_fs->e2fs_bsize;
@@ -297,15 +270,16 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 
 	memset(&info, 0, sizeof(info));
 	if (ext2fs_htree_find_leaf(ip, name, namelen, &dirhash,
-	    &hash_version, &info)) 
+	    &hash_version, &info)) {
 		return -1;
+	}
 
 	do {
 		leaf_node = info.h_levels[info.h_levels_num - 1].h_entry;
 		blk = ext2fs_htree_get_block(leaf_node);
 		if (ext2fs_blkatoff(vp, blk * bsize, NULL, &bp) != 0) {
 			ext2fs_htree_release(&info);
-			return  ESRCH;
+			return -1;
 		}
 
 		*offp = blk * bsize;
@@ -318,12 +292,13 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 			ss->slotfreespace = 0;
 		}
 
+		int found;
 		if (ext2fs_search_dirblock(ip, bp->b_data, &found,
 		    name, namelen, entryoffp, offp, prevoffp,
 		    endusefulp, ss) != 0) {
-			brelse(bp,0);
+			brelse(bp, 0);
 			ext2fs_htree_release(&info);
-			return ESRCH;
+			return -1;
 		}
 
 		if (found) {
@@ -339,6 +314,3 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 	ext2fs_htree_release(&info);
 	return ENOENT;
 }
-
-
-

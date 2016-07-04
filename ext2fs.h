@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.37 2016/06/03 15:35:48 christos Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.38 2016/06/24 17:21:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -63,7 +63,6 @@
 #define _UFS_EXT2FS_EXT2FS_H_
 
 #include <sys/bswap.h>
-#include <sys/types.h>
 
 /*
  * Each disk drive contains some number of file systems.
@@ -236,6 +235,7 @@ struct m_ext2fs {
 	u_char	e2fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 	int8_t	e2fs_ronly;	/* mounted read-only flag */
 	int8_t	e2fs_fmod;	/* super block modified flag */
+	int8_t	e2fs_uhash;	/* 3 if hash should be signed, 0 if not */
 	int32_t	e2fs_bsize;	/* block size */
 	int32_t e2fs_bshift;	/* ``lblkno'' calc of logical blkno */
 	int32_t e2fs_bmask;	/* ``blkoff'' calc of blk offsets */
@@ -246,7 +246,6 @@ struct m_ext2fs {
 	int32_t	e2fs_ipb;	/* number of inodes per block */
 	int32_t	e2fs_itpg;	/* number of inode table per group */
 	struct	ext2_gd *e2fs_gd; /* group descripors */
-	 int32_t  e2fs_uhash;      /* 3 if hash should be signed, 0 if not */
 };
 
 
@@ -332,19 +331,11 @@ struct m_ext2fs {
 #define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE \
 					 | EXT2F_INCOMPAT_EXTENTS)
 
-
-
-
-#define EXT2_SB(sb) (sb)
-
-
 /*
-* Feature set definitions
-*/
-#define EXT2_HAS_COMPAT_FEATURE(sb,mask)            \
-    ( EXT2_SB(sb)->e2fs.e2fs_features_compat & htole32(mask) )
-
-
+ * Feature set definitions
+ */
+#define EXT2_HAS_COMPAT_FEATURE(sb, mask) \
+    ((sb)->e2fs.e2fs_features_compat & htole32(mask))
 
 /*
  * Definitions of behavior on errors
