@@ -81,6 +81,7 @@ static void	ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir,
 static int	ext2fs_dirbadentry(struct vnode *dp,
 					  struct ext2fs_direct *de,
 					  int entryoffsetinblock);
+void ext2fs_accumulatespace (struct ext2fs_searchslot *, struct ext2fs_direct *, doff_t * );
 
 /*
  * the problem that is tackled below is the fact that FFS
@@ -892,20 +893,20 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		const struct ufs_lookup_results *ulr,
 		struct componentname *cnp)
 {
-	struct ext2fs_direct *ep, *nep;
+//	struct ext2fs_direct *ep;// *nep;
 	struct inode *dp;
-	struct buf *bp;
+//	struct buf *bp;
 	struct ext2fs_direct newdir;
 	struct iovec aiov;
 	struct uio auio;
-	u_int dsize;
-	int error, loc, newentrysize, spacefree;
-	char *dirbuf;
+//	u_int dsize;
+	int error, newentrysize;// spacefree, loc;
+//	char *dirbuf;
 	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
-
+	
 	dp = VTOI(dvp);
-
+	int DIRBLKSIZ = dp->i_e2fs->e2fs_bsize;
 	newdir.e2d_ino = h2fs32(ip->i_number);
 	newdir.e2d_namlen = cnp->cn_namelen;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
@@ -916,6 +917,32 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	}
 	memcpy(newdir.e2d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
 	newentrysize = EXT2FS_DIRSIZ(cnp->cn_namelen);
+	
+	if (ext2fs_htree_has_idx(dp)) {
+		error = ext2fs_htree_add_entry(dvp, &newdir, cnp);
+		if (error) {
+			dp->i_flag &= ~EXT2_INDEX;
+			dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		}
+		return (error);
+	}
+
+	if (EXT2_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX) &&
+	    !ext2fs_htree_has_idx(dp)) {
+		if ((dp->i_size / DIRBLKSIZ) == 1 &&
+		    ulr->ulr_offset == DIRBLKSIZ) {
+			/*
+			 * Making indexed directory when one block is not
+			 * enough to save all entries.
+			 */
+			return ext2fs_htree_create_index(dvp, cnp, &newdir);
+		}
+	}
+	
+	
+	
+	
+	
 	if (ulr->ulr_count == 0) {
 		/*
 		 * If ulr_count is 0, then namei could find no
@@ -949,6 +976,36 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		return (error);
 	}
 
+	error = ext2fs_add_entry(dvp, &newdir,ulr);
+	
+	if (!error && ulr->ulr_endoff && ulr->ulr_endoff < ext2fs_size(dp))
+		error = ext2fs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC,
+		    cnp->cn_cred);
+	return (error);
+}
+
+
+/*
+ * Insert an entry into the directory block.
+ * Compact the contents.
+ */
+
+
+int
+ext2fs_add_entry (struct vnode* dvp, struct ext2fs_direct *entry, const struct ufs_lookup_results *ulr) 
+{	
+	struct ext2fs_direct *ep, *nep;
+	struct inode *dp;
+	struct buf *bp;
+	u_int dsize;
+	int error, loc, newentrysize, spacefree;
+	char *dirbuf;
+
+	dp = VTOI(dvp);
+
+
+
+
 	/*
 	 * If ulr_count is non-zero, then namei found space
 	 * for the new entry in the range ulr_offset to
@@ -971,7 +1028,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	 * space.
 	 */
 	ep = (struct ext2fs_direct *)dirbuf;
-	dsize = EXT2FS_DIRSIZ(ep->e2d_namlen);
+	newentrysize = dsize  = EXT2FS_DIRSIZ(ep->e2d_namlen);
 	spacefree = fs2h16(ep->e2d_reclen) - dsize;
 	for (loc = fs2h16(ep->e2d_reclen); loc < ulr->ulr_count; ) {
 		nep = (struct ext2fs_direct *)(dirbuf + loc);
@@ -997,7 +1054,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		if (spacefree + dsize < newentrysize)
 			panic("ext2fs_direnter: compact1");
 #endif
-		newdir.e2d_reclen = h2fs16(spacefree + dsize);
+		entry->e2d_reclen = h2fs16(spacefree + dsize);
 	} else {
 #ifdef DIAGNOSTIC
 		if (spacefree < newentrysize) {
@@ -1006,18 +1063,20 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 			panic("ext2fs_direnter: compact2");
 		}
 #endif
-		newdir.e2d_reclen = h2fs16(spacefree);
+		entry->e2d_reclen = h2fs16(spacefree);
 		ep->e2d_reclen = h2fs16(dsize);
 		ep = (struct ext2fs_direct *)((char *)ep + dsize);
 	}
-	memcpy((void *)ep, (void *)&newdir, (u_int)newentrysize);
+	memcpy((void *)ep, (void *)entry, (u_int)newentrysize);
 	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (!error && ulr->ulr_endoff && ulr->ulr_endoff < ext2fs_size(dp))
-		error = ext2fs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC,
-		    cnp->cn_cred);
-	return (error);
+	
+	return error;
+
 }
+
+
+
 
 /*
  * Remove a directory entry after a call to namei, using

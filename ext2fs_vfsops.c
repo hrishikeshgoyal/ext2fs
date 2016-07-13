@@ -1169,6 +1169,7 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 			printf("ext2fs: unsupported first inode position\n");
 			return EINVAL;
 		}
+		printf("e2fs_features value: %x, EXT2F_INCOMPAT_SUPP value: %x \n", fs->e2fs_features_incompat, EXT2F_INCOMPAT_SUPP);
 		u32 = fs->e2fs_features_incompat & ~(EXT2F_INCOMPAT_SUPP);
 		if (u32) {
 		
@@ -1181,7 +1182,7 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
 			printf("ext2fs: unsupported ro-incompat features: %s\n",
 			    buf);
-			return EROFS;
+			//return EROFS;
 		}
 		if (fs->e2fs_inode_size == 0 || !powerof2(fs->e2fs_inode_size)) {
 			printf("ext2fs: bad inode size\n");
