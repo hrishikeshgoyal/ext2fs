@@ -303,6 +303,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error = 0, flags, update;
 	mode_t accessmode;
 
+
 	if (args == NULL)
 		return EINVAL;
 	if (*data_len < sizeof *args)
@@ -391,6 +392,8 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return (error);
 	}
 
+//	printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
+
 	if (!update) {
 		int xflags;
 
@@ -398,22 +401,34 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			xflags = FREAD;
 		else
 			xflags = FREAD|FWRITE;
+		
+//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
+
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, xflags, FSCRED);
 		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
+//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
+
 		error = ext2fs_mountfs(devvp, mp);
+//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
+
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, xflags, NOCRED);
 			VOP_UNLOCK(devvp);
 			goto fail;
 		}
+//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
 
 		ump = VFSTOUFS(mp);
 		fs = ump->um_e2fs;
+		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
+
 	} else {
+//		printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
+
 		/*
 		 * Update the mount.
 		 */
@@ -424,9 +439,10 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		 * namei(), above.
 		 */
 		vrele(devvp);
-
+//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
 		ump = VFSTOUFS(mp);
 		fs = ump->um_e2fs;
+		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
 		if (fs->e2fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/*
 			 * Changing from r/w to r/o
@@ -451,6 +467,9 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			if (error)
 				return (error);
 		}
+		
+		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
+
 
 		if (fs->e2fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
@@ -466,6 +485,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (args->fspec == NULL)
 			return 0;
 	}
+	printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
@@ -478,12 +498,14 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		memset(fs->e2fs.e2fs_fsmnt, 0,
 		    sizeof(fs->e2fs.e2fs_fsmnt) - size);
 	}
+	printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
+
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
 			fs->e2fs.e2fs_wtime = time_second;
 		else
-			printf("%s: file system not clean; please fsck(8)\n",
+			printf("%s: file system really not clean; please fsck(8)\n",
 				mp->mnt_stat.f_mntfromname);
 		(void) ext2fs_cgupdate(ump, MNT_WAIT);
 	}
@@ -1169,7 +1191,7 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 			printf("ext2fs: unsupported first inode position\n");
 			return EINVAL;
 		}
-		printf("e2fs_features value: %x, EXT2F_INCOMPAT_SUPP value: %x \n", fs->e2fs_features_incompat, EXT2F_INCOMPAT_SUPP);
+		printf("e2fs_features_incompat value: %x, EXT2F_INCOMPAT_SUPP value: %x \n", fs->e2fs_features_incompat, EXT2F_INCOMPAT_SUPP);
 		u32 = fs->e2fs_features_incompat & ~(EXT2F_INCOMPAT_SUPP);
 		if (u32) {
 		
@@ -1178,6 +1200,7 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 			return EINVAL;
 		}
 		u32 = fs->e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP;
+		printf("e2fs_features_rocompat value: %x, EXT2F_ROCOMPAT_SUPP value: %x \n", fs->e2fs_features_rocompat, EXT2F_ROCOMPAT_SUPP);
 		if (!ronly && u32) {
 			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
 			printf("ext2fs: unsupported ro-incompat features: %s\n",

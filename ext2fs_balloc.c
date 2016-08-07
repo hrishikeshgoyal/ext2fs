@@ -92,7 +92,7 @@ int
 ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
     kauth_cred_t cred, struct buf **bpp, int flags)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct m_ext2fs *fs;
 	daddr_t nb;
 	struct buf *bp, *nbp;
@@ -350,7 +350,7 @@ int
 ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
     kauth_cred_t cred)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip = VTOI(vp);
 	struct m_ext2fs *fs = ip->i_e2fs;
 	int error, delta, bshift, bsize;
