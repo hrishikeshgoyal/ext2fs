@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.46 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.47 2016/08/03 21:53:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.46 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.47 2016/08/03 21:53:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ int
 ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
     kauth_cred_t cred, daddr_t *bnp)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct m_ext2fs *fs;
 	daddr_t bno;
 	int cg;
@@ -166,7 +165,6 @@ int
 ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
     struct vnode **vpp)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *pip;
 	struct m_ext2fs *fs;
 	struct inode *ip;
@@ -200,7 +198,7 @@ ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 		panic("ext2fs_valloc: dup alloc");
 	}
 
-	memset(ip->i_din.e2fs_din, 0, sizeof(struct ext2fs_dinode));
+	memset(ip->i_din.e2fs_din, 0, EXT2_DINODE_SIZE(fs));
 
 	/*
 	 * Set up a new generation number for this inode.
@@ -225,7 +223,6 @@ noinodes:
 static u_long
 ext2fs_dirpref(struct m_ext2fs *fs)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	int cg, maxspace, mincg, avgifree;
 
 	avgifree = fs->e2fs.e2fs_ficount / fs->e2fs_ncg;
@@ -256,7 +253,6 @@ daddr_t
 ext2fs_blkpref(struct inode *ip, daddr_t lbn, int indx,
 		int32_t *bap /* XXX ondisk32 */)
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct m_ext2fs *fs;
 	int cg, i;
 
@@ -301,7 +297,6 @@ static u_long
 ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
 		daddr_t (*allocator)(struct inode *, int, daddr_t, int))
 {
-//	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct m_ext2fs *fs;
 	long result;
 	int i, icg = cg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh 
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
+#include <sys/dirent.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -93,7 +94,6 @@ ext2fs_sane_rename(
     struct vnode *tdvp, struct componentname *tcnp,
     kauth_cred_t cred, bool posixly_correct)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ufs_lookup_results fulr, tulr;
 
 	return genfs_sane_rename(&ext2fs_genfs_rename_ops,
@@ -108,7 +108,7 @@ ext2fs_sane_rename(
 int
 ext2fs_rename(void *v)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	return genfs_insane_rename(v, &ext2fs_sane_rename);
 }
 
@@ -122,7 +122,7 @@ static bool
 ext2fs_gro_directory_empty_p(struct mount *mp, kauth_cred_t cred,
     struct vnode *vp, struct vnode *dvp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(vp != NULL);
@@ -145,7 +145,7 @@ ext2fs_gro_rename_check_possible(struct mount *mp,
     struct vnode *fdvp, struct vnode *fvp,
     struct vnode *tdvp, struct vnode *tvp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(fdvp != NULL);
@@ -183,7 +183,7 @@ ext2fs_gro_rename_check_permitted(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct vnode *fvp,
     struct vnode *tdvp, struct vnode *tvp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(fdvp != NULL);
@@ -220,7 +220,7 @@ static int
 ext2fs_gro_remove_check_possible(struct mount *mp,
     struct vnode *dvp, struct vnode *vp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(dvp != NULL);
@@ -246,7 +246,7 @@ static int
 ext2fs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
     struct vnode *dvp, struct vnode *vp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(dvp != NULL);
@@ -274,7 +274,6 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *tdvp, struct componentname *tcnp,
     void *tde, struct vnode *tvp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ufs_lookup_results *fulr = fde;
 	struct ufs_lookup_results *tulr = tde;
 	bool directory_p, reparent_p;
@@ -516,7 +515,6 @@ static bool
 ext2fs_rename_ulr_overlap_p(const struct ufs_lookup_results *fulr,
     const struct ufs_lookup_results *tulr)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	doff_t from_prev_start, from_prev_end, to_start, to_end;
 
 	KASSERT(fulr != NULL);
@@ -555,7 +553,6 @@ ext2fs_rename_recalculate_fulr(struct vnode *dvp,
     struct ufs_lookup_results *fulr, const struct ufs_lookup_results *tulr,
     const struct componentname *fcnp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct mount *mp;
 	struct ufsmount *ump;
 	/* XXX int is a silly type for this; blame ufsmount::um_dirblksiz.  */
@@ -696,7 +693,6 @@ static int
 ext2fs_gro_remove(struct mount *mp, kauth_cred_t cred,
     struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ufs_lookup_results *ulr = de;
 	int error;
 
@@ -735,7 +731,6 @@ static int
 ext2fs_gro_lookup(struct mount *mp, struct vnode *dvp,
     struct componentname *cnp, void *de_ret, struct vnode **vp_ret)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ufs_lookup_results *ulr_ret = de_ret;
 	struct vnode *vp;
 	int error;
@@ -780,7 +775,7 @@ out:	*ulr_ret = VTOI(dvp)->i_crap;
 static bool
 ext2fs_rmdired_p(struct vnode *vp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
+
 	KASSERT(vp != NULL);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(vp->v_type == VDIR);
@@ -798,7 +793,6 @@ ext2fs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct vnode *tdvp,
     struct vnode **intermediate_node_ret)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct vnode *vp, *dvp;
 	ino_t dotdot_ino = -1;	/* XXX gcc 4.8.3: maybe-uninitialized */
 	int error;
@@ -892,7 +886,6 @@ ext2fs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 static int
 ext2fs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ext2fs_dirtemplate dirbuf;
 	int error;
 
@@ -924,7 +917,6 @@ ext2fs_rename_replace_dotdot(struct vnode *vp,
     struct vnode *fdvp, struct vnode *tdvp,
     kauth_cred_t cred)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct ext2fs_dirtemplate dirbuf;
 	int error;
 

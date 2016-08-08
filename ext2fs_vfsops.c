@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.193 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.197 2016/08/05 20:06:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.193 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.197 2016/08/05 20:06:55 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -164,6 +164,7 @@ static const struct ufs_ops ext2fs_ufsops = {
 void
 ext2fs_set_inode_guid(struct inode *ip)
 {
+
 	ip->i_gid = ip->i_e2fs_gid;
 	ip->i_uid = ip->i_e2fs_uid;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0) {
@@ -212,17 +213,15 @@ ext2fs_modcmd(modcmd_t cmd, void *arg)
  * XXX Same structure as FFS inodes?  Should we share a common pool?
  */
 struct pool ext2fs_inode_pool;
-struct pool ext2fs_dinode_pool;
 
 extern u_long ext2gennumber;
 
 void
 ext2fs_init(void)
 {
+
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", &pool_allocator_nointr, IPL_NONE);
-	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
-	    "ext2dinopl", &pool_allocator_nointr, IPL_NONE);
 	ufs_init();
 }
 
@@ -238,7 +237,6 @@ ext2fs_done(void)
 
 	ufs_done();
 	pool_destroy(&ext2fs_inode_pool);
-	pool_destroy(&ext2fs_dinode_pool);
 }
 
 /*
@@ -249,7 +247,7 @@ ext2fs_done(void)
 
 int
 ext2fs_mountroot(void)
-{	
+{
 	extern struct vnode *rootvp;
 	struct m_ext2fs *fs;
 	struct mount *mp;
@@ -302,7 +300,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	size_t size;
 	int error = 0, flags, update;
 	mode_t accessmode;
-
 
 	if (args == NULL)
 		return EINVAL;
@@ -392,8 +389,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return (error);
 	}
 
-//	printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
-
 	if (!update) {
 		int xflags;
 
@@ -401,34 +396,22 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			xflags = FREAD;
 		else
 			xflags = FREAD|FWRITE;
-		
-//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
-
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(devvp, xflags, FSCRED);
 		VOP_UNLOCK(devvp);
 		if (error)
 			goto fail;
-//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
-
 		error = ext2fs_mountfs(devvp, mp);
-//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
-
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, xflags, NOCRED);
 			VOP_UNLOCK(devvp);
 			goto fail;
 		}
-//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
 
 		ump = VFSTOUFS(mp);
 		fs = ump->um_e2fs;
-		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
-
 	} else {
-//		printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
-
 		/*
 		 * Update the mount.
 		 */
@@ -439,10 +422,9 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		 * namei(), above.
 		 */
 		vrele(devvp);
-//		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
+
 		ump = VFSTOUFS(mp);
 		fs = ump->um_e2fs;
-		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
 		if (fs->e2fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/*
 			 * Changing from r/w to r/o
@@ -467,9 +449,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			if (error)
 				return (error);
 		}
-		
-		printf("lineno: %d and value of fmod  %x \n", __LINE__, fs->e2fs_fmod );
-
 
 		if (fs->e2fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
@@ -485,7 +464,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (args->fspec == NULL)
 			return 0;
 	}
-	printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
@@ -498,14 +476,12 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		memset(fs->e2fs.e2fs_fsmnt, 0,
 		    sizeof(fs->e2fs.e2fs_fsmnt) - size);
 	}
-	printf("lineno: %d and value of fmod  %d \n", __LINE__, fs->e2fs_fmod );
-
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
 			fs->e2fs.e2fs_wtime = time_second;
 		else
-			printf("%s: file system really not clean; please fsck(8)\n",
+			printf("%s: file system not clean; please fsck(8)\n",
 				mp->mnt_stat.f_mntfromname);
 		(void) ext2fs_cgupdate(ump, MNT_WAIT);
 	}
@@ -513,6 +489,43 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 fail:
 	vrele(devvp);
+	return (error);
+}
+
+/*
+ *
+ */
+static int
+ext2fs_loadvnode_content(struct m_ext2fs *fs, ino_t ino, struct buf *bp, struct inode *ip)
+{
+	struct ext2fs_dinode *din;
+	void *cp;
+	int error = 0;
+
+	cp = (char *)bp->b_data + (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE(fs));
+	din = kmem_alloc(EXT2_DINODE_SIZE(fs), KM_SLEEP);
+	e2fs_iload((struct ext2fs_dinode *)cp, din, EXT2_DINODE_SIZE(fs));
+
+	/* sanity checks */
+	if (EXT2_DINODE_FITS(din, e2di_extra_isize, EXT2_DINODE_SIZE(fs))
+	    && (EXT2_DINODE_SIZE(fs) - EXT2_REV0_DINODE_SIZE) < din->e2di_extra_isize)
+	{
+		printf("ext2fs: inode %"PRIu64" bad extra_isize %u",
+			ino, din->e2di_extra_isize);
+		error = EINVAL;
+		goto bad;
+	}
+
+	/* replace old dinode; assumes new dinode size is same as old one */
+	if (ip->i_din.e2fs_din)
+		kmem_free(ip->i_din.e2fs_din, EXT2_DINODE_SIZE(fs));
+	ip->i_din.e2fs_din = din;
+
+	ext2fs_set_inode_guid(ip);
+	return (error);
+
+    bad:
+	kmem_free(din, EXT2_DINODE_SIZE(fs));
 	return (error);
 }
 
@@ -538,7 +551,6 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	struct m_ext2fs *fs;
 	struct ext2fs *newfs;
 	int i, error;
-	void *cp;
 	struct ufsmount *ump;
 	struct vnode_iterator *marker;
 
@@ -616,11 +628,13 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			vput(vp);
 			break;
 		}
-		cp = (char *)bp->b_data +
-		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE(fs));
-		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
-		ext2fs_set_inode_guid(ip);
+		error = ext2fs_loadvnode_content(fs, ip->i_number, bp, ip);
 		brelse(bp, 0);
+		if (error) {
+			vput(vp);
+			break;
+		}
+
 		vput(vp);
 	}
 	vfs_vnode_iterator_destroy(marker);
@@ -633,7 +647,6 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 int
 ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 {
-	
 	struct lwp *l = curlwp;
 	struct ufsmount *ump;
 	struct buf *bp;
@@ -750,7 +763,6 @@ out:
 int
 ext2fs_unmount(struct mount *mp, int mntflags)
 {
-	
 	struct ufsmount *ump;
 	struct m_ext2fs *fs;
 	int error, flags;
@@ -956,7 +968,6 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 	struct buf *bp;
 	dev_t dev;
 	int error;
-	void *cp;
 
 	KASSERT(key_len == sizeof(ino));
 	memcpy(&ino, key, key_len);
@@ -988,11 +999,10 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 	/* Initialize genfs node. */
 	genfs_node_init(vp, &ext2fs_genfsops);
 
-	cp = (char *)bp->b_data + (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE(fs));
-	ip->i_din.e2fs_din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
-	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
-	ext2fs_set_inode_guid(ip);
+	error = ext2fs_loadvnode_content(fs, ino, bp, ip);
 	brelse(bp, 0);
+	if (error)
+		return error;
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
@@ -1037,7 +1047,6 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 int
 ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip;
 	struct vnode *nvp;
 	int error;
@@ -1075,7 +1084,6 @@ ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 int
 ext2fs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
-	printf("In file: %s, fun: %s,lineno: %d\n",__FILE__, __func__, __LINE__);
 	struct inode *ip;
 	struct ufid ufh;
 
@@ -1145,7 +1153,7 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
  */
 static int
 ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
-{	
+{
 	uint32_t u32;
 	struct ext2fs *fs = &m_fs->e2fs;
 
@@ -1183,37 +1191,6 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 	}
 
 	/*
-	 * Revision-specific checks
-	 */
-	if (fs->e2fs_rev > E2FS_REV0) {
-		char buf[256];
-		if (fs->e2fs_first_ino != EXT2_FIRSTINO) {
-			printf("ext2fs: unsupported first inode position\n");
-			return EINVAL;
-		}
-		printf("e2fs_features_incompat value: %x, EXT2F_INCOMPAT_SUPP value: %x \n", fs->e2fs_features_incompat, EXT2F_INCOMPAT_SUPP);
-		u32 = fs->e2fs_features_incompat & ~(EXT2F_INCOMPAT_SUPP);
-		if (u32) {
-		
-			snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS, u32);
-			printf("ext2fs: unsupported incompat features: %s\n", buf);
-			return EINVAL;
-		}
-		u32 = fs->e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP;
-		printf("e2fs_features_rocompat value: %x, EXT2F_ROCOMPAT_SUPP value: %x \n", fs->e2fs_features_rocompat, EXT2F_ROCOMPAT_SUPP);
-		if (!ronly && u32) {
-			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
-			printf("ext2fs: unsupported ro-incompat features: %s\n",
-			    buf);
-			//return EROFS;
-		}
-		if (fs->e2fs_inode_size == 0 || !powerof2(fs->e2fs_inode_size)) {
-			printf("ext2fs: bad inode size\n");
-			return EINVAL;
-		}
-	}
-
-	/*
 	 * Compute the fields of the superblock
 	 */
 	u32 = fs->e2fs_bcount - fs->e2fs_first_dblock; /* > 0 */
@@ -1247,6 +1224,38 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE(m_fs);
 
 	m_fs->e2fs_itpg = fs->e2fs_ipg / m_fs->e2fs_ipb;
+
+	/*
+	 * Revision-specific checks
+	 */
+	if (fs->e2fs_rev > E2FS_REV0) {
+		char buf[256];
+		if (fs->e2fs_first_ino != EXT2_FIRSTINO) {
+			printf("ext2fs: unsupported first inode position\n");
+			return EINVAL;
+		}
+		u32 = fs->e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP;
+		if (u32) {
+			snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS, u32);
+			printf("ext2fs: unsupported incompat features: %s\n", buf);
+#ifndef EXT2_IGNORE_INCOMPAT_FEATURES
+			return EINVAL;
+#endif
+		}
+		u32 = fs->e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP;
+		if (!ronly && u32) {
+			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
+			printf("ext2fs: unsupported ro-incompat features: %s\n",
+			    buf);
+#ifndef EXT2_IGNORE_ROCOMPAT_FEATURES
+			return EROFS;
+#endif
+		}
+		if (fs->e2fs_inode_size == 0 || !powerof2(fs->e2fs_inode_size) || fs->e2fs_inode_size > m_fs->e2fs_bsize) {
+			printf("ext2fs: bad inode size\n");
+			return EINVAL;
+		}
+	}
 
 	return 0;
 }
