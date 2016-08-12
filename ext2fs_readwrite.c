@@ -492,3 +492,4 @@ ext2fs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
 		error = oerror;
 	return error;
 }
+

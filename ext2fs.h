@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.41 2016/08/05 21:22:06 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.43 2016/08/12 20:26:15 macallan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -282,7 +282,7 @@ struct m_ext2fs {
 #define EXT2F_ROCOMPAT_LARGEFILE	0x0002
 #define EXT2F_ROCOMPAT_BTREE_DIR	0x0004
 #define EXT2F_ROCOMPAT_HUGE_FILE	0x0008
-#define EXT2F_ROCOMPAT_GDT_CSUM		0x0010
+#define EXT2F_ROCOMPAT_GDT_CSUM	0x0010
 #define EXT2F_ROCOMPAT_DIR_NLINK	0x0020
 #define EXT2F_ROCOMPAT_EXTRA_ISIZE	0x0040
 #define EXT2F_ROCOMPAT_QUOTA		0x0100
@@ -340,6 +340,14 @@ struct m_ext2fs {
 	"\03INCOMPAT_REPLAY_JOURNAL" \
 	"\02INCOMPAT_FTYPE" \
 	"\01INCOMPAT_COMP"
+
+#define EXT2F_HAS_COMPAT_FEATURE(ip, feature) \
+	((ip)->i_e2fs->e2fs.e2fs_rev >= E2FS_REV1 && \
+	((ip)->i_e2fs->e2fs.e2fs_features_compat & (feature)) != 0)
+
+#define EXT2F_HAS_INCOMPAT_FEATURE(ip, feature) \
+	((ip)->i_e2fs->e2fs.e2fs_rev >= E2FS_REV1 && \
+	((ip)->i_e2fs->e2fs.e2fs_features_incompat & (feature)) != 0)
 
 /*
  * Features supported in this implementation
@@ -512,3 +520,4 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 #define	EXT2_NINDIR(fs)	((fs)->e2fs_bsize / sizeof(uint32_t))
 
 #endif /* !_UFS_EXT2FS_EXT2FS_H_ */
+

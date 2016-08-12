@@ -1,4 +1,5 @@
-/*	$NetBSD: ext2fs_extents.h,v 1.1 2016/06/03 15:35:48 christos Exp $	*/
+
+/*	$NetBSD: ext2fs_extents.h,v 1.4 2016/08/09 13:18:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2010 Zheng Liu <lz@freebsd.org>
@@ -105,3 +106,4 @@ struct ext4_extent_path *ext4_ext_find_extent(struct m_ext2fs *fs,
     struct inode *, daddr_t, struct ext4_extent_path *);
 
 #endif /* !_UFS_EXT2FS_EXT2FS_EXTENTS_H_ */
+

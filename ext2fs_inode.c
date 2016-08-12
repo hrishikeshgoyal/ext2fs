@@ -613,3 +613,4 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	*countp = blocksreleased;
 	return (allerror);
 }
+

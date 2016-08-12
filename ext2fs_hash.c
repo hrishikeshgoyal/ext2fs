@@ -312,3 +312,4 @@ error:
 		*hash_minor = 0;
 	return -1;
 }
+

@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.22 2016/08/04 17:43:48 jdolecek E
 void
 e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 {
-
 	/* preserve unused fields */
 	memcpy(new, old, sizeof(struct ext2fs));
 	new->e2fs_icount	=	bswap32(old->e2fs_icount);
@@ -103,6 +102,7 @@ e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new, size_t isize)
 	memcpy(new, old, isize);
 
 	/* swap what needs to be swapped */
+
 	new->e2di_mode		=	bswap16(old->e2di_mode);
 	new->e2di_uid		=	bswap16(old->e2di_uid);
 	new->e2di_gid		=	bswap16(old->e2di_gid);
@@ -151,3 +151,4 @@ e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new, size_t isize)
 		new->e2di_projid	= bswap32(old->e2di_projid);
 }
 #endif
+

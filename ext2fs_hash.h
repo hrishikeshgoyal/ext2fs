@@ -38,3 +38,4 @@
 #define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
 #endif /* _EXT2FS_HASH_H_ */
+

@@ -337,3 +337,4 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	*bnp = daddr == 0 ? -1 : daddr;
 	return (0);
 }
+

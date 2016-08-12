@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.1 2016/06/24 17:21:30 christos Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.4 2016/08/09 21:08:02 kre Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.1 2016/06/24 17:21:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.4 2016/08/09 21:08:02 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,19 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.1 2016/06/24 17:21:30 christos Ex
 #include <ufs/ext2fs/ext2fs_htree.h>
 #include <ufs/ext2fs/ext2fs_hash.h>
 
+static int ext2fs_htree_find_leaf(struct inode *, const char *, int ,
+    uint32_t *, uint8_t *, struct ext2fs_htree_lookup_info *);
 
-
-static int
-ext2fs_htree_find_leaf(struct inode *, const char *, int , uint32_t *, uint8_t *,
-    struct ext2fs_htree_lookup_info *);
-    
     
 int
 ext2fs_htree_has_idx(struct inode *ip)
 {
-	 /*
-	 XXX ip->i_flags should have got checked here for IN_E3INDEX
-	 */
+
+	/* XXX ip->i_flags should have got checked here for IN_E3INDEX */
 	return EXT2_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX)
 	    && (ip->i_din.e2fs_din->e2di_flags & EXT2_INDEX);
 }
@@ -81,7 +77,6 @@ ext2fs_htree_get_block(struct ext2fs_htree_entry *ep)
 {
 	return ep->h_blk & 0x00FFFFFF;
 }
-
 
 static void
 ext2fs_htree_release(struct ext2fs_htree_lookup_info *info)
@@ -153,12 +148,13 @@ ext2fs_htree_node_limit(struct inode *ip)
 	fs = ip->i_e2fs;
 	space = fs->e2fs_bsize - EXT2_DIR_REC_LEN(0);
 
-	return (space / sizeof(struct ext2fs_htree_entry));
+
+	return space / sizeof(struct ext2fs_htree_entry);
 }
 
 static int
 ext2fs_htree_append_block(struct vnode *vp, char *data,
-			struct componentname *cnp, uint32_t blksize)
+    struct componentname *cnp, uint32_t blksize)
 {
 	struct iovec aiov;
 	struct uio auio;
@@ -176,12 +172,13 @@ ext2fs_htree_append_block(struct vnode *vp, char *data,
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_WRITE;
+	auio.uio_vmspace = vmspace_kernel();
 //	auio.uio_vmspace = UIO_SYSSPACE;
 	error = VOP_WRITE(vp, &auio, IO_SYNC, cnp->cn_cred);
 	if (!error)
 		dp->i_size = newsize;
 
-	return (error);
+	return error;
 }
 
 static int
@@ -193,15 +190,15 @@ ext2fs_htree_writebuf(struct ext2fs_htree_lookup_info *info)
 		struct buf *bp = info->h_levels[i].h_bp;
 		error = bwrite(bp);
 		if (error)
-			return (error);
+			return error;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
 ext2fs_htree_insert_entry_to_level(struct ext2fs_htree_lookup_level *level,
-				 uint32_t hash, uint32_t blk)
+    uint32_t hash, uint32_t blk)
 {
 	struct ext2fs_htree_entry *target;
 	int entries_num;
@@ -221,7 +218,7 @@ ext2fs_htree_insert_entry_to_level(struct ext2fs_htree_lookup_level *level,
  */
 static void
 ext2fs_htree_insert_entry(struct ext2fs_htree_lookup_info *info,
-			uint32_t hash, uint32_t blk)
+    uint32_t hash, uint32_t blk)
 {
 	struct ext2fs_htree_lookup_level *level;
 
@@ -242,10 +239,10 @@ ext2fs_htree_cmp_sort_entry(const void *e1, const void *e2)
 	entry2 = (const struct ext2fs_htree_sort_entry *)e2;
 
 	if (entry1->h_hash < entry2->h_hash)
-		return (-1);
+		return -1;
 	if (entry1->h_hash > entry2->h_hash)
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 /*
@@ -253,8 +250,7 @@ ext2fs_htree_cmp_sort_entry(const void *e1, const void *e2)
  */
 static void
 ext2fs_append_entry(char *block, uint32_t blksize,
-		  struct ext2fs_direct *last_entry,
-		  struct ext2fs_direct *new_entry)
+    struct ext2fs_direct *last_entry, struct ext2fs_direct *new_entry)
 {
 	uint16_t entry_len;
 
@@ -270,8 +266,8 @@ ext2fs_append_entry(char *block, uint32_t blksize,
  */
 static int
 ext2fs_htree_split_dirblock(char *block1, char *block2, uint32_t blksize,
-			  uint32_t *hash_seed, uint8_t hash_version,
-			  uint32_t *split_hash, struct ext2fs_direct *entry)
+    uint32_t *hash_seed, uint8_t hash_version,
+    uint32_t *split_hash, struct ext2fs_direct *entry)
 {
 	int entry_cnt = 0;
 	int size = 0;
@@ -380,7 +376,7 @@ ext2fs_htree_split_dirblock(char *block1, char *block2, uint32_t blksize,
 		    block2 + blksize - dest;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -389,7 +385,7 @@ ext2fs_htree_split_dirblock(char *block1, char *block2, uint32_t blksize,
  */
 int
 ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
-			struct ext2fs_direct *new_entry)
+    struct ext2fs_direct *new_entry)
 {
 	struct buf *bp = NULL;
 	struct inode *dp;
@@ -424,9 +420,8 @@ ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
 	while ((char *)ep < buf1 + dirlen)
 		ep = (struct ext2fs_direct *)((char *)ep + ep->e2d_reclen);
 	ep->e2d_reclen = buf1 + blksize - (char *)ep;
-	/*
-	XXX It should be made dp->i_flag |= IN_E3INDEX;
-	*/
+	
+	/* XXX It should be made dp->i_flag |= IN_E3INDEX; */	
 	dp->i_din.e2fs_din->e2di_flags |= EXT2_INDEX;
 
 	/*
@@ -456,7 +451,6 @@ ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
 	/*
 	 * Write directory block 0.
 	 */
-	
 	if ( (vp)->v_mount->mnt_iflag & IO_SYNC)
 		(void)bwrite(bp);
 	else
@@ -477,17 +471,14 @@ ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
 	 * Write directory block 2.
 	 */
 	error = ext2fs_htree_append_block(vp, buf2, cnp, blksize);
-
-	free(buf1, M_TEMP);
-	free(buf2, M_TEMP);
-	return (error);
+	goto out1;
 out:
 	if (bp != NULL)
-		brelse(bp,0);
+		brelse(bp, 0);
 out1:
 	free(buf1, M_TEMP);
 	free(buf2, M_TEMP);
-	return (error);
+	return error;
 }
 
 /*
@@ -495,7 +486,7 @@ out1:
  */
 int
 ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
-		     struct componentname *cnp)
+    struct componentname *cnp)
 {
 	struct ext2fs_htree_entry *entries, *leaf_node;
 	struct ext2fs_htree_lookup_info info;
@@ -528,7 +519,7 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 	error = ext2fs_htree_find_leaf(ip, entry->e2d_name, entry->e2d_namlen,
 	    &dirhash, &hash_version, &info);
 	if (error)
-		return (error);
+		return error;
 	entries = info.h_levels[info.h_levels_num - 1].h_entries;
 	ent_num = ext2fs_htree_get_count(entries);
 	if (ent_num == ext2fs_htree_get_limit(entries)) {
@@ -672,9 +663,9 @@ finish:
 		free(newidxblock, M_TEMP);
 	if (!write_info)
 		ext2fs_htree_release(&info);
-	return (error);
-}
 
+	return error;
+}
 
 static int
 ext2fs_htree_check_next(struct inode *ip, uint32_t hash, const char *name,
@@ -878,3 +869,4 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 	ext2fs_htree_release(&info);
 	return ENOENT;
 }
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.121 2016/08/12 19:04:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.121 2016/08/12 19:04:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
+#include <ufs/ext2fs/ext2fs_xattr.h>
 
 extern int prtactive;
 
@@ -222,7 +223,6 @@ ext2fs_open(void *v)
 static int
 ext2fs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode)
 {
-
 	/*
 	 * Disallow write attempts on read-only file systems;
 	 * unless the file is a socket, fifo, or a block or
@@ -252,7 +252,6 @@ static int
 ext2fs_check_permitted(struct vnode *vp, struct inode *ip, mode_t mode,
     kauth_cred_t cred)
 {
-
 	return kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(mode, vp->v_type,
 	    ip->i_e2fs_mode & ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
 	    ip->i_e2fs_mode & ALLPERMS, ip->i_uid, ip->i_gid, mode, cred));
@@ -276,7 +275,6 @@ ext2fs_access(void *v)
 		return error;
 
 	error = ext2fs_check_permitted(vp, ip, mode, ap->a_cred);
-
 	return error;
 }
 
@@ -729,7 +727,7 @@ ext2fs_mkdir(void *v)
 	}
 	dirtemplate.dot_name[0] = '.';
 	dirtemplate.dotdot_ino = h2fs32(dp->i_number);
-    dirtemplate.dotdot_reclen = h2fs16(VTOI(dvp)->i_e2fs->e2fs_bsize - 12);
+	dirtemplate.dotdot_reclen = h2fs16(VTOI(dvp)->i_e2fs->e2fs_bsize - 12);
 	dirtemplate.dotdot_namlen = 2;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
 	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
@@ -1182,6 +1180,10 @@ const struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
+	{ &vop_getextattr_desc, ext2fs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ext2fs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ext2fs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ext2fs_deleteextattr },/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
@@ -1232,6 +1234,10 @@ const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_getextattr_desc, ext2fs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ext2fs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ext2fs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ext2fs_deleteextattr },/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_specop_opv_desc =
@@ -1281,7 +1287,12 @@ const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, vn_fifo_bypass },		/* putpages */
+	{ &vop_getextattr_desc, ext2fs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ext2fs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ext2fs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ext2fs_deleteextattr },/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_fifoop_opv_desc =
 	{ &ext2fs_fifoop_p, ext2fs_fifoop_entries };
+

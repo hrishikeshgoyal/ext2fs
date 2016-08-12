@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extents.c,v 1.1 2016/06/03 15:35:48 christos Exp $	*/
+/*	$NetBSD: ext2fs_extents.c,v 1.2 2016/08/09 06:40:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_extents.c,v 1.1 2016/06/03 15:35:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_extents.c,v 1.2 2016/08/09 06:40:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,3 +230,4 @@ ext4_ext_find_extent(struct m_ext2fs *fs, struct inode *ip,
 	ext4_ext_binsearch(ip, path, lbn, first_lbn, last_lbn);
 	return path;
 }
+
