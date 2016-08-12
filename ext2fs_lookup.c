@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.82 2016/08/09 20:18:08 christos 
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs.h>
-#include<ufs/ext2fs/ext2fs_htree.h>
+#include <ufs/ext2fs/ext2fs_htree.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -83,7 +83,6 @@ static int	ext2fs_dirbadentry(struct vnode *dp,
 					  struct ext2fs_direct *de,
 					  int entryoffsetinblock);
 void ext2fs_accumulatespace (struct ext2fs_searchslot *, struct ext2fs_direct *, doff_t * );
- int calling_msg (int dir_chk);
 /*
  * the problem that is tackled below is the fact that FFS
  * includes the terminating zero on disk while EXT2FS doesn't
@@ -125,10 +124,8 @@ ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 static int
 ext2fs_is_dot_entry(struct componentname *cnp)
 {
-	if (cnp->cn_namelen <= 2 && cnp->cn_nameptr[0] == '.' &&
-	    (cnp->cn_nameptr[1] == '.' || cnp->cn_nameptr[1] == '\0'))
-		return (1);
-	return (0);
+	return cnp->cn_namelen <= 2 && cnp->cn_nameptr[0] == '.' &&
+	    (cnp->cn_nameptr[1] == '.' || cnp->cn_nameptr[1] == '\0');
 }
 
 
@@ -288,7 +285,7 @@ ext2fs_lookup(void *v)
 	struct buf *bp;			/* a buffer of directory entries */
 	struct ext2fs_direct *ep;	/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
-	enum {NONE, COMPACT, FOUND} slotstatus;
+	enum ext2fs_slotstatus  slotstatus;
 	doff_t slotoffset;		/* offset of area with free space */
 	int slotsize;			/* size of area at slotoffset */
 	int slotfreespace;		/* amount of space free in slot */
@@ -299,10 +296,7 @@ ext2fs_lookup(void *v)
 	struct vnode *tdp;		/* returned by vcache_get */
 	doff_t enduseful;		/* pointer past last used dir slot */
 	u_long bmask;			/* block offset mask */
-	unsigned int namlen;
-	int  error;
-	doff_t i_offset;		/* cached i_offset value */
-	struct ext2fs_searchslot ss;
+	unsigned int namlen, error;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	kauth_cred_t cred = cnp->cn_cred;
@@ -312,9 +306,10 @@ ext2fs_lookup(void *v)
 	int dirblksiz = ump->um_dirblksiz;
 	ino_t foundino;
 	struct ufs_lookup_results *results;
-	
-	int DIRBLKSIZ = VTOI(vdp)->i_e2fs->e2fs_bsize;
-	
+	doff_t i_offset;		/* cached i_offset value */
+	struct ext2fs_searchslot ss;
+		
+	int DIRBLKSIZ = VTOI(vdp)->i_e2fs->e2fs_bsize;	
 	bmask = VFSTOEXT2(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	flags = cnp->cn_flags;
 
@@ -370,6 +365,35 @@ ext2fs_lookup(void *v)
 	}
 	
 	/*
+	 * If there is cached information on a previous search of
+	 * this directory, pick up where we last left off.
+	 * We cache only lookups as these are the most common
+	 * and have the greatest payoff. Caching CREATE has little
+	 * benefit as it usually must search the entire directory
+	 * to determine that the entry does not exist. Caching the
+	 * location of the last DELETE or RENAME has not reduced
+	 * profiling time and hence has been removed in the interest
+	 * of simplicity.
+	 */
+	bmask = vdp->v_mount->mnt_stat.f_iosize - 1;
+	if (nameiop != LOOKUP || results->ulr_diroff == 0 ||
+	    results->ulr_diroff >= ext2fs_size(dp)) {
+		entryoffsetinblock = 0;
+		results->ulr_offset = 0;
+		numdirpasses = 1;
+	} else {
+		results->ulr_offset = results->ulr_diroff;
+		if ((entryoffsetinblock = results->ulr_offset & bmask) &&
+		    (error = ext2fs_blkatoff(vdp, (off_t)results->ulr_offset, NULL, &bp)))
+			return (error);
+		numdirpasses = 2;
+		namecache_count_2passes();
+	}
+	prevoff = results->ulr_offset;
+	endsearch = roundup(ext2fs_size(dp), dirblksiz);
+	enduseful = 0;
+	
+	/*
 	 * Try to lookup dir entry using htree directory index.
 	 *
 	 * If we got an error or we want to find '.' or '..' entry,
@@ -399,34 +423,7 @@ ext2fs_lookup(void *v)
 		}
 	}
 
-	/*
-	 * If there is cached information on a previous search of
-	 * this directory, pick up where we last left off.
-	 * We cache only lookups as these are the most common
-	 * and have the greatest payoff. Caching CREATE has little
-	 * benefit as it usually must search the entire directory
-	 * to determine that the entry does not exist. Caching the
-	 * location of the last DELETE or RENAME has not reduced
-	 * profiling time and hence has been removed in the interest
-	 * of simplicity.
-	 */
-	bmask = vdp->v_mount->mnt_stat.f_iosize - 1;
-	if (nameiop != LOOKUP || results->ulr_diroff == 0 ||
-	    results->ulr_diroff >= ext2fs_size(dp)) {
-		entryoffsetinblock = 0;
-		results->ulr_offset = 0;
-		numdirpasses = 1;
-	} else {
-		results->ulr_offset = results->ulr_diroff;
-		if ((entryoffsetinblock = results->ulr_offset & bmask) &&
-		    (error = ext2fs_blkatoff(vdp, (off_t)results->ulr_offset, NULL, &bp)))
-			return (error);
-		numdirpasses = 2;
-		namecache_count_2passes();
-	}
-	prevoff = results->ulr_offset;
-	endsearch = roundup(ext2fs_size(dp), dirblksiz);
-	enduseful = 0;
+
 
 searchloop:
 	while (results->ulr_offset < endsearch) {
@@ -463,8 +460,8 @@ searchloop:
 		KASSERT(bp != NULL);
 		ep = (struct ext2fs_direct *)
 			((char *)bp->b_data + entryoffsetinblock);
-		/*if (ep->e2d_reclen == 0 ||
-		    (dirchk &&calling_msg(dirchk)&&
+		if (ep->e2d_reclen == 0 ||
+		    (dirchk &&
 		     ext2fs_dirbadentry(vdp, ep, entryoffsetinblock))) {
 			int i;
 
@@ -473,10 +470,10 @@ searchloop:
 			results->ulr_offset += i;
 			entryoffsetinblock += i;
 			continue;
-		}*/
+		}
 
 		/*
-		 * Ifg an appropriate sized slot has not yet been found,
+		 * If an appropriate sized slot has not yet been found,
 		 * check to see if one is available. Also accumulate space
 		 * in the current block so that we can determine if
 		 * compaction is viable.
@@ -529,7 +526,7 @@ searchloop:
 		if (ep->e2d_ino)
 			enduseful = results->ulr_offset;
 	}
-notfound: 
+notfound:
 	/*
 	 * If we started in the middle of the directory and failed
 	 * to find our target, we must check the beginning as well.

@@ -92,7 +92,6 @@ static int	ext2fs_post_write_update(struct vnode *, struct uio *, int,
 int
 ext2fs_read(void *v)
 {
-	printf("ex2fs_read\n");
 	struct vop_read_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
@@ -196,7 +195,7 @@ ext2fs_bufrd(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		if (bytesinfile < xfersize)
 			xfersize = bytesinfile;
 
-		if (ext2_lblktosize(fs, nextlbn) >= ext2fs_size(ip)) 
+		if (ext2_lblktosize(fs, nextlbn) >= ext2fs_size(ip))
 			error = bread(vp, lbn, size, 0, &bp);
 		
 		else {

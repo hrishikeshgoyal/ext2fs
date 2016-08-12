@@ -196,11 +196,6 @@ int ext2fs_htree_add_entry(struct vnode *, struct ext2fs_direct *,
     struct componentname *);
 
 
-//static int ext2fs_htree_append_block(struct vnode *, char *, struct componentname *, uint32_t );
-//static int ext2fs_htree_writebuf(struct ext2fs_htree_lookup_info *);
-//static void ext2fs_htree_insert_entry(struct ext2fs_htree_lookup_info *, uint32_t, uint32_t);
-//static void ext2fs_append_entry(char *, uint32_t, struct ext2fs_direct *, struct ext2fs_direct *);
-
 
 __END_DECLS
 

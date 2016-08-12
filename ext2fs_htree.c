@@ -173,7 +173,6 @@ ext2fs_htree_append_block(struct vnode *vp, char *data,
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_vmspace = vmspace_kernel();
-//	auio.uio_vmspace = UIO_SYSSPACE;
 	error = VOP_WRITE(vp, &auio, IO_SYNC, cnp->cn_cred);
 	if (!error)
 		dp->i_size = newsize;
