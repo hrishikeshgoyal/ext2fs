@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.52 2016/08/09 21:08:02 kre Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.55 2016/08/20 19:47:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -100,6 +100,7 @@ int ext2fs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 daddr_t ext2fs_blkpref(struct inode *, daddr_t, int, int32_t *);
 void ext2fs_blkfree(struct inode *, daddr_t);
 int ext2fs_vfree(struct vnode *, ino_t, int);
+int ext2fs_cg_verify_and_initialize(struct vnode *, struct m_ext2fs *, int);
 
 /* ext2fs_balloc.c */
 int ext2fs_balloc(struct inode *, daddr_t, int, kauth_cred_t,
@@ -133,10 +134,8 @@ int ext2fs_dirremove(struct vnode *, const struct ufs_lookup_results *,
 int ext2fs_dirrewrite(struct inode *, const struct ufs_lookup_results *,
 			   struct inode *, struct componentname *);
 int ext2fs_dirempty(struct inode *, ino_t, kauth_cred_t);
-
 int ext2fs_add_entry(struct vnode *, struct ext2fs_direct *,
-    const struct ufs_lookup_results *); 
-
+    const struct ufs_lookup_results *, size_t); 
 
 /* ext2fs_subr.c */
 int ext2fs_blkatoff(struct vnode *, off_t, char **, struct buf **);
@@ -178,7 +177,7 @@ int ext2fs_fsync(void *);
 int ext2fs_vinit(struct mount *, int (**specops)(void *),
 		      int (**fifoops)(void *), struct vnode **);
 int ext2fs_makeinode(int, struct vnode *, struct vnode **,
-			  struct componentname *cnp);
+			  struct componentname *cnp, int);
 int ext2fs_reclaim(void *);
 
 /* ext2fs_hash.c */
@@ -188,14 +187,11 @@ int ext2fs_htree_hash(const char *, int, uint32_t *, int, uint32_t *,
 /* ext2fs_htree.c */        
 int ext2fs_htree_has_idx(struct inode *);
 int ext2fs_htree_lookup(struct inode *, const char *, int, struct buf **,
-
     int *, doff_t *, doff_t *, doff_t *, struct ext2fs_searchslot *);
 int ext2fs_htree_create_index(struct vnode *, struct componentname *,
     struct ext2fs_direct *);
 int ext2fs_htree_add_entry(struct vnode *, struct ext2fs_direct *,
-    struct componentname *);
-
-
+    struct componentname *, size_t);
 
 __END_DECLS
 
@@ -206,4 +202,3 @@ extern int (**ext2fs_specop_p)(void *);
 extern int (**ext2fs_fifoop_p)(void *);
 
 #endif /* !_UFS_EXT2FS_EXT2FS_EXTERN_H_ */
-

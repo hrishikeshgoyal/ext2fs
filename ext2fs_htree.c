@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.4 2016/08/09 21:08:02 kre Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.9 2016/08/23 06:23:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.4 2016/08/09 21:08:02 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.9 2016/08/23 06:23:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,14 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.4 2016/08/09 21:08:02 kre Exp $")
 
 static int ext2fs_htree_find_leaf(struct inode *, const char *, int ,
     uint32_t *, uint8_t *, struct ext2fs_htree_lookup_info *);
-
     
 int
 ext2fs_htree_has_idx(struct inode *ip)
 {
-
-	/* XXX ip->i_flags should have got checked here for IN_E3INDEX */
-	return EXT2_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX)
+	return EXT2F_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX)
 	    && (ip->i_din.e2fs_din->e2di_flags & EXT2_INDEX);
 }
 
@@ -147,7 +144,6 @@ ext2fs_htree_node_limit(struct inode *ip)
 
 	fs = ip->i_e2fs;
 	space = fs->e2fs_bsize - EXT2_DIR_REC_LEN(0);
-
 
 	return space / sizeof(struct ext2fs_htree_entry);
 }
@@ -310,7 +306,7 @@ ext2fs_htree_split_dirblock(char *block1, char *block2, uint32_t blksize,
 	 * Sort directory entry descriptors by name hash value.
 	 */
 	kheapsort(sort_info, entry_cnt, sizeof(struct ext2fs_htree_sort_entry),
-	    ext2fs_htree_cmp_sort_entry,&dummy);
+	    ext2fs_htree_cmp_sort_entry, &dummy);
 
 	/*
 	 * Count the number of entries to move to directory block 2.
@@ -347,7 +343,7 @@ ext2fs_htree_split_dirblock(char *block1, char *block2, uint32_t blksize,
 	/* Shrink directory entries in block 1. */
 	last = (struct ext2fs_direct *)block1;
 	entry_len = 0;
-	for (offset = 0; offset < blksize; ) {
+	for (offset = 0; offset < blksize;) {
 		ep = (struct ext2fs_direct *)(block1 + offset);
 		offset += ep->e2d_reclen;
 		if (ep->e2d_ino) {
@@ -419,8 +415,7 @@ ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
 	while ((char *)ep < buf1 + dirlen)
 		ep = (struct ext2fs_direct *)((char *)ep + ep->e2d_reclen);
 	ep->e2d_reclen = buf1 + blksize - (char *)ep;
-	
-	/* XXX It should be made dp->i_flag |= IN_E3INDEX; */	
+	/* XXX It should be made dp->i_flag |= IN_E3INDEX; */
 	dp->i_din.e2fs_din->e2di_flags |= EXT2_INDEX;
 
 	/*
@@ -456,8 +451,6 @@ ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
 		bdwrite(bp);
 	
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (error)
-		goto out;
 
 	/*
 	 * Write directory block 1.
@@ -485,7 +478,7 @@ out1:
  */
 int
 ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
-    struct componentname *cnp)
+    struct componentname *cnp, size_t newentrysize)
 {
 	struct ext2fs_htree_entry *entries, *leaf_node;
 	struct ext2fs_htree_lookup_info info;
@@ -512,7 +505,8 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 	blksize = m_fs->e2fs_bsize;
 
 	if (ip->i_crap.ulr_count != 0) 
-		return ext2fs_add_entry(dvp, entry, &(ip->i_crap) );
+		return ext2fs_add_entry(dvp, entry, &(ip->i_crap), newentrysize);
+
 	/* Target directory block is full, split it */
 	memset(&info, 0, sizeof(info));
 	error = ext2fs_htree_find_leaf(ip, entry->e2d_name, entry->e2d_namlen,
@@ -662,7 +656,6 @@ finish:
 		free(newidxblock, M_TEMP);
 	if (!write_info)
 		ext2fs_htree_release(&info);
-
 	return error;
 }
 
@@ -784,7 +777,7 @@ ext2fs_htree_find_leaf(struct inode *ip, const char *name, int namelen,
 		level_info->h_entries = entp;
 		level_info->h_entry = found;
 		if (levels == 0)
-			return (0);
+			return 0;
 		levels--;
 		if (ext2fs_blkatoff(vp,
 		    ext2fs_htree_get_block(found) * m_fs->e2fs_bsize,
@@ -818,7 +811,6 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 	uint32_t bsize;
 	uint8_t hash_version;
 	int search_next;
-	int found=0;
 
 	m_fs = ip->i_e2fs;
 	bsize = m_fs->e2fs_bsize;
@@ -836,10 +828,10 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 		leaf_node = info.h_levels[info.h_levels_num - 1].h_entry;
 		blk = ext2fs_htree_get_block(leaf_node);
 		if (ext2fs_blkatoff(vp, blk * bsize, NULL, &bp) != 0) {
-
 			ext2fs_htree_release(&info);
 			return -1;
 		}
+
 		*offp = blk * bsize;
 		*entryoffp = 0;
 		*prevoffp = blk * bsize;
@@ -850,6 +842,7 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 			ss->slotfreespace = 0;
 		}
 
+		int found;
 		if (ext2fs_search_dirblock(ip, bp->b_data, &found,
 		    name, namelen, entryoffp, offp, prevoffp,
 		    endusefulp, ss) != 0) {
@@ -857,15 +850,17 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 			ext2fs_htree_release(&info);
 			return -1;
 		}
+
 		if (found) {
 			*bpp = bp;
 			ext2fs_htree_release(&info);
 			return 0;
 		}
-		brelse(bp,0);
+
+		brelse(bp, 0);
 		search_next = ext2fs_htree_check_next(ip, dirhash, name, &info);
 	} while (search_next);
+
 	ext2fs_htree_release(&info);
 	return ENOENT;
 }
-

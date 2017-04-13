@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.22 2016/08/04 17:43:48 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.24 2016/08/20 19:47:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.22 2016/08/04 17:43:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.24 2016/08/20 19:47:44 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.22 2016/08/04 17:43:48 jdolecek E
 void
 e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 {
+
 	/* preserve unused fields */
 	memcpy(new, old, sizeof(struct ext2fs));
 	new->e2fs_icount	=	bswap32(old->e2fs_icount);
@@ -78,21 +79,7 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 	new->e2fs_features_rocompat =	bswap32(old->e2fs_features_rocompat);
 	new->e2fs_algo		=	bswap32(old->e2fs_algo);
 	new->e2fs_reserved_ngdb	=	bswap16(old->e2fs_reserved_ngdb);
-}
-
-void
-e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
-{
-	int i;
-
-	for (i = 0; i < (size / (int)sizeof(struct  ext2_gd)); i++) {
-		new[i].ext2bgd_b_bitmap	= bswap32(old[i].ext2bgd_b_bitmap);
-		new[i].ext2bgd_i_bitmap	= bswap32(old[i].ext2bgd_i_bitmap);
-		new[i].ext2bgd_i_tables	= bswap32(old[i].ext2bgd_i_tables);
-		new[i].ext2bgd_nbfree	= bswap16(old[i].ext2bgd_nbfree);
-		new[i].ext2bgd_nifree	= bswap16(old[i].ext2bgd_nifree);
-		new[i].ext2bgd_ndirs	= bswap16(old[i].ext2bgd_ndirs);
-	}
+	new->e4fs_want_extra_isize =	bswap16(old->e4fs_want_extra_isize);
 }
 
 void
@@ -102,7 +89,6 @@ e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new, size_t isize)
 	memcpy(new, old, isize);
 
 	/* swap what needs to be swapped */
-
 	new->e2di_mode		=	bswap16(old->e2di_mode);
 	new->e2di_uid		=	bswap16(old->e2di_uid);
 	new->e2di_gid		=	bswap16(old->e2di_gid);
@@ -151,4 +137,3 @@ e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new, size_t isize)
 		new->e2di_projid	= bswap32(old->e2di_projid);
 }
 #endif
-

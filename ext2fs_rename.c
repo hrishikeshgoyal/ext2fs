@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.11 2016/08/15 18:38:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.11 2016/08/15 18:38:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -108,6 +108,7 @@ ext2fs_sane_rename(
 int
 ext2fs_rename(void *v)
 {
+
 	return genfs_insane_rename(v, &ext2fs_sane_rename);
 }
 
@@ -121,6 +122,7 @@ static bool
 ext2fs_gro_directory_empty_p(struct mount *mp, kauth_cred_t cred,
     struct vnode *vp, struct vnode *dvp)
 {
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(vp != NULL);
@@ -143,6 +145,7 @@ ext2fs_gro_rename_check_possible(struct mount *mp,
     struct vnode *fdvp, struct vnode *fvp,
     struct vnode *tdvp, struct vnode *tvp)
 {
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(fdvp != NULL);
@@ -180,6 +183,7 @@ ext2fs_gro_rename_check_permitted(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct vnode *fvp,
     struct vnode *tdvp, struct vnode *tvp)
 {
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(fdvp != NULL);
@@ -216,6 +220,7 @@ static int
 ext2fs_gro_remove_check_possible(struct mount *mp,
     struct vnode *dvp, struct vnode *vp)
 {
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(dvp != NULL);
@@ -241,6 +246,7 @@ static int
 ext2fs_gro_remove_check_permitted(struct mount *mp, kauth_cred_t cred,
     struct vnode *dvp, struct vnode *vp)
 {
+
 	(void)mp;
 	KASSERT(mp != NULL);
 	KASSERT(dvp != NULL);
@@ -301,7 +307,7 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * We shall need to temporarily bump the link count, so make
 	 * sure there is room to do so.
 	 */
-	if ((nlink_t)VTOI(fvp)->i_e2fs_nlink >= LINK_MAX)
+	if ((nlink_t)VTOI(fvp)->i_e2fs_nlink >= EXT2FS_LINK_MAX)
 		return EMLINK;
 
 	directory_p = (fvp->v_type == VDIR);
@@ -324,7 +330,7 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 *    may be wrong, but correctable.
 	 */
 
-	KASSERT((nlink_t)VTOI(fvp)->i_e2fs_nlink < LINK_MAX);
+	KASSERT((nlink_t)VTOI(fvp)->i_e2fs_nlink < EXT2FS_LINK_MAX);
 	VTOI(fvp)->i_e2fs_nlink++;
 	VTOI(fvp)->i_flag |= IN_CHANGE;
 	error = ext2fs_update(fvp, NULL, NULL, UPDATE_WAIT);
@@ -346,11 +352,11 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		 * parent we don't fool with the link count.
 		 */
 		if (directory_p && reparent_p) {
-			if ((nlink_t)VTOI(tdvp)->i_e2fs_nlink >= LINK_MAX) {
+			if ((nlink_t)VTOI(tdvp)->i_e2fs_nlink >= EXT2FS_LINK_MAX) {
 				error = EMLINK;
 				goto whymustithurtsomuch;
 			}
-			KASSERT((nlink_t)VTOI(tdvp)->i_e2fs_nlink < LINK_MAX);
+			KASSERT((nlink_t)VTOI(tdvp)->i_e2fs_nlink < EXT2FS_LINK_MAX);
 			VTOI(tdvp)->i_e2fs_nlink++;
 			VTOI(tdvp)->i_flag |= IN_CHANGE;
 			error = ext2fs_update(tdvp, NULL, NULL, UPDATE_WAIT);
@@ -769,12 +775,13 @@ out:	*ulr_ret = VTOI(dvp)->i_crap;
 static bool
 ext2fs_rmdired_p(struct vnode *vp)
 {
+
 	KASSERT(vp != NULL);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(vp->v_type == VDIR);
 
 	/* XXX Is this correct?  */
-	return (ext2fs_size(VTOI(vp)) == 0);
+	return ext2fs_size(VTOI(vp)) == 0;
 }
 
 /*
@@ -979,4 +986,3 @@ static const struct genfs_rename_ops ext2fs_genfs_rename_ops = {
 	.gro_genealogy			= ext2fs_gro_genealogy,
 	.gro_lock_directory		= ext2fs_gro_lock_directory,
 };
-

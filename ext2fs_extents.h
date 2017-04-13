@@ -1,4 +1,3 @@
-
 /*	$NetBSD: ext2fs_extents.h,v 1.4 2016/08/09 13:18:50 kre Exp $	*/
 
 /*-
@@ -33,6 +32,10 @@
 #define	_UFS_EXT2FS_EXT2FS_EXTENTS_H_
 
 #include <sys/types.h>
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
+
 #include <ufs/ufs/inode.h>
 #define	EXT4_EXT_MAGIC  0xf30a
 
@@ -106,4 +109,3 @@ struct ext4_extent_path *ext4_ext_find_extent(struct m_ext2fs *fs,
     struct inode *, daddr_t, struct ext4_extent_path *);
 
 #endif /* !_UFS_EXT2FS_EXT2FS_EXTENTS_H_ */
-

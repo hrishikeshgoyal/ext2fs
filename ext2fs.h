@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.43 2016/08/12 20:26:15 macallan Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.48 2016/08/20 19:47:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -128,6 +128,13 @@
 #define MINFREE		5
 
 /*
+ * This is maximum amount of links allowed for files. For directories,
+ * going over this means setting DIR_NLINK feature.
+ */
+#define EXT2FS_LINK_MAX		65000
+#define EXT2FS_LINK_INF		1		/* link count unknown */
+
+/*
  * Super block for an ext2fs file system.
  */
 struct ext2fs {
@@ -242,10 +249,10 @@ struct m_ext2fs {
 	int64_t e2fs_qbmask;	/* ~fs_bmask - for use with quad size */
 	int32_t	e2fs_fsbtodb;	/* fsbtodb and dbtofsb shift constant */
 	int32_t	e2fs_ncg;	/* number of cylinder groups */
-	int32_t	e2fs_ngdb;	/* number of group descriptor block */
+	int32_t	e2fs_ngdb;	/* number of group descriptor blocks */
 	int32_t	e2fs_ipb;	/* number of inodes per block */
-	int32_t	e2fs_itpg;	/* number of inode table per group */
-	struct	ext2_gd *e2fs_gd; /* group descripors */
+	int32_t	e2fs_itpg;	/* number of inode table blocks per group */
+	struct	ext2_gd *e2fs_gd; /* group descriptors (data not byteswapped) */
 };
 
 
@@ -282,7 +289,7 @@ struct m_ext2fs {
 #define EXT2F_ROCOMPAT_LARGEFILE	0x0002
 #define EXT2F_ROCOMPAT_BTREE_DIR	0x0004
 #define EXT2F_ROCOMPAT_HUGE_FILE	0x0008
-#define EXT2F_ROCOMPAT_GDT_CSUM	0x0010
+#define EXT2F_ROCOMPAT_GDT_CSUM		0x0010
 #define EXT2F_ROCOMPAT_DIR_NLINK	0x0020
 #define EXT2F_ROCOMPAT_EXTRA_ISIZE	0x0040
 #define EXT2F_ROCOMPAT_QUOTA		0x0100
@@ -341,14 +348,6 @@ struct m_ext2fs {
 	"\02INCOMPAT_FTYPE" \
 	"\01INCOMPAT_COMP"
 
-#define EXT2F_HAS_COMPAT_FEATURE(ip, feature) \
-	((ip)->i_e2fs->e2fs.e2fs_rev >= E2FS_REV1 && \
-	((ip)->i_e2fs->e2fs.e2fs_features_compat & (feature)) != 0)
-
-#define EXT2F_HAS_INCOMPAT_FEATURE(ip, feature) \
-	((ip)->i_e2fs->e2fs.e2fs_rev >= E2FS_REV1 && \
-	((ip)->i_e2fs->e2fs.e2fs_features_incompat & (feature)) != 0)
-
 /*
  * Features supported in this implementation
  *
@@ -366,15 +365,28 @@ struct m_ext2fs {
 #define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
 					 | EXT2F_ROCOMPAT_LARGEFILE \
 					 | EXT2F_ROCOMPAT_HUGE_FILE \
-					 | EXT2F_ROCOMPAT_EXTRA_ISIZE)
+					 | EXT2F_ROCOMPAT_EXTRA_ISIZE \
+					 | EXT2F_ROCOMPAT_DIR_NLINK \
+					 | EXT2F_ROCOMPAT_GDT_CSUM)
 #define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE \
-					 | EXT2F_INCOMPAT_EXTENTS)
+					 | EXT2F_INCOMPAT_EXTENTS \
+					 | EXT2F_INCOMPAT_FLEX_BG)
 
 /*
  * Feature set definitions
  */
-#define EXT2_HAS_COMPAT_FEATURE(sb, mask) \
-    ((sb)->e2fs.e2fs_features_compat & htole32(mask))
+#define EXT2F_HAS_COMPAT_FEATURE(fs, feature) \
+	((fs)->e2fs.e2fs_rev >= E2FS_REV1 && \
+	((fs)->e2fs.e2fs_features_compat & (feature)) != 0)
+
+#define EXT2F_HAS_ROCOMPAT_FEATURE(fs, feature) \
+	((fs)->e2fs.e2fs_rev >= E2FS_REV1 && \
+	((fs)->e2fs.e2fs_features_rocompat & (feature)) != 0)
+
+#define EXT2F_HAS_INCOMPAT_FEATURE(fs, feature) \
+	((fs)->e2fs.e2fs_rev >= E2FS_REV1 && \
+	((fs)->e2fs.e2fs_features_incompat & (feature)) != 0)
+
 
 /*
  * Definitions of behavior on errors
@@ -404,15 +416,35 @@ struct m_ext2fs {
 struct ext2_gd {
 	uint32_t ext2bgd_b_bitmap;	/* blocks bitmap block */
 	uint32_t ext2bgd_i_bitmap;	/* inodes bitmap block */
-	uint32_t ext2bgd_i_tables;	/* inodes table block  */
+	uint32_t ext2bgd_i_tables;	/* first inodes table block */
 	uint16_t ext2bgd_nbfree;	/* number of free blocks */
 	uint16_t ext2bgd_nifree;	/* number of free inodes */
 	uint16_t ext2bgd_ndirs;		/* number of directories */
-	uint16_t reserved;
-	uint32_t reserved2[3];
+
+	/*
+	 * Following only valid when either GDT_CSUM (AKA uninit_bg) 
+	 * or METADATA_CKSUM feature is on
+	 */
+	uint16_t ext2bgd_flags;		/* ext4 bg flags (INODE_UNINIT, ...)*/
+	uint32_t ext2bgd_exclude_bitmap_lo;	/* snapshot exclude bitmap */
+	uint16_t ext2bgd_block_bitmap_csum_lo;	/* Low block bitmap checksum */
+	uint16_t ext2bgd_inode_bitmap_csum_lo;	/* Low inode bitmap checksum */
+	uint16_t ext2bgd_itable_unused_lo;	/* Low unused inode offset */
+	uint16_t ext2bgd_checksum;		/* Group desc checksum */
+
+	/*
+	 * XXX disk32 Further fields only exist if 64BIT feature is on
+	 * and superblock desc_size > 32, not supported for now.
+	 */
 };
 
+#define E2FS_BG_INODE_UNINIT	0x0001	/* Inode bitmap not used/initialized */
+#define E2FS_BG_BLOCK_UNINIT	0x0002	/* Block bitmap not used/initialized */
+#define E2FS_BG_INODE_ZEROED	0x0004	/* On-disk inode table initialized */
 
+#define E2FS_HAS_GD_CSUM(fs) \
+	EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_GDT_CSUM|EXT2F_ROCOMPAT_METADATA_CKSUM) != 0
+	
 /*
  * If the EXT2F_ROCOMPAT_SPARSESUPER flag is set, the cylinder group has a
  * copy of the super and cylinder group descriptors blocks only if it's
@@ -446,13 +478,10 @@ cg_has_sb(int i)
 #	define fs2h16(x) (x)
 #	define fs2h32(x) (x)
 #	define fs2h64(x) (x)
-#	define e2fs_sbload(old, new) memcpy((new), (old), SBSIZE);
-#	define e2fs_cgload(old, new, size) memcpy((new), (old), (size));
-#	define e2fs_sbsave(old, new) memcpy((new), (old), SBSIZE);
-#	define e2fs_cgsave(old, new, size) memcpy((new), (old), (size));
+#	define e2fs_sbload(old, new) memcpy((new), (old), SBSIZE)
+#	define e2fs_sbsave(old, new) memcpy((new), (old), SBSIZE)
 #else
 void e2fs_sb_bswap(struct ext2fs *, struct ext2fs *);
-void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 #	define h2fs16(x) bswap16(x)
 #	define h2fs32(x) bswap32(x)
 #	define h2fs64(x) bswap64(x)
@@ -460,10 +489,12 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 #	define fs2h32(x) bswap32(x)
 #	define fs2h64(x) bswap64(x)
 #	define e2fs_sbload(old, new) e2fs_sb_bswap((old), (new))
-#	define e2fs_cgload(old, new, size) e2fs_cg_bswap((old), (new), (size));
 #	define e2fs_sbsave(old, new) e2fs_sb_bswap((old), (new))
-#	define e2fs_cgsave(old, new, size) e2fs_cg_bswap((old), (new), (size));
 #endif
+
+/* Group descriptors are not byte swapped */
+#define e2fs_cgload(old, new, size) memcpy((new), (old), (size))
+#define e2fs_cgsave(old, new, size) memcpy((new), (old), (size))
 
 /*
  * Turn file system block numbers into disk block addresses.
@@ -480,7 +511,7 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  */
 #define	ino_to_cg(fs, x)	(((x) - 1) / (fs)->e2fs.e2fs_ipg)
 #define	ino_to_fsba(fs, x)						\
-	((fs)->e2fs_gd[ino_to_cg((fs), (x))].ext2bgd_i_tables +		\
+	(fs2h32((fs)->e2fs_gd[ino_to_cg((fs), (x))].ext2bgd_i_tables) +	\
 	(((x) - 1) % (fs)->e2fs.e2fs_ipg) / (fs)->e2fs_ipb)
 #define	ino_to_fsbo(fs, x)	(((x) - 1) % (fs)->e2fs_ipb)
 
@@ -520,4 +551,3 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 #define	EXT2_NINDIR(fs)	((fs)->e2fs_bsize / sizeof(uint32_t))
 
 #endif /* !_UFS_EXT2FS_EXT2FS_H_ */
-

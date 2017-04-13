@@ -1,4 +1,3 @@
-
 /*	$NetBSD: ext2fs_hash.h,v 1.1 2016/06/24 17:21:30 christos Exp $	*/
 
 /*-
@@ -38,4 +37,3 @@
 #define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
 #endif /* _EXT2FS_HASH_H_ */
-
